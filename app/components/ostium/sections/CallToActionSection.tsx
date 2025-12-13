@@ -22,7 +22,7 @@ export function CallToActionSection() {
           trade non-stop on Ostium.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          <Link href="/my-deployments">
+          <Link href="https://www.maxxit.ai/">
             <button
               className={`group flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold ${hoverLiftClass}`}
               style={{
@@ -37,7 +37,7 @@ export function CallToActionSection() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </Link>
-          <Link href="/docs">
+          <Link href="https://www.maxxit.ai/docs">
             <button
               className={`px-8 py-4 rounded-xl text-lg font-semibold border ${hoverLiftClass}`}
               style={{

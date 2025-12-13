@@ -34,7 +34,7 @@ export function HeroSection() {
         />
       </div>
       <div className="relative max-w-5xl mx-auto px-6 py-16 md:py-20 text-center z-10">
-        <Badge label="Build a strategy" tone="muted" />
+        <div className="text-sm font-semibold tracking-[0.25em] mb-4" style={{ color: theme.textMuted }}>Build a strategy</div>
         <h1
           className="text-4xl md:text-5xl font-semibold mt-5 mb-6"
           style={{ color: theme.text, fontFamily: fonts.heading }}
@@ -52,7 +52,7 @@ export function HeroSection() {
         </p>
 
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          <Link href="/my-deployments">
+          <Link href="https://www.maxxit.ai/">
             <button
               className={`group flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold ${hoverLiftClass}`}
               style={{

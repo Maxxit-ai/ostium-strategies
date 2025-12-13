@@ -13,7 +13,7 @@ export function ComparisonSection() {
 
       <Card padding="p-0">
         <div
-          className="grid grid-cols-3 gap-4 p-4 border-b"
+          className="grid grid-cols-3 gap-4 p-4 border-b rounded-t-2xl"
           style={{ borderColor: theme.stroke, background: theme.surfaceAlt }}
         >
           <div
