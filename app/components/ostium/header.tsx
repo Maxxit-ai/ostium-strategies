@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { Bell, Plus, ChevronDown, TrendingUp, BarChart3, Wallet, Zap, Settings, FileText, HelpCircle, Shield, Users } from "lucide-react";
+import { usePrivy } from "@privy-io/react-auth";
+import { Bell, Plus, ChevronDown, Wallet, LogOut } from "lucide-react";
 import { fonts, theme } from "./theme";
 import { hoverLiftClass } from "./ui";
 import Image from "next/image";
@@ -88,7 +89,6 @@ function NavDropdown({
     >
       <div className="p-2">
         {items.map((item, idx) => {
-          const Icon = item.icon;
           return (
             <Link
               key={idx}
@@ -125,8 +125,90 @@ function NavDropdown({
   );
 }
 
+function WalletDropdown({
+  isOpen,
+  onClose,
+  walletAddress,
+  onDisconnect,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  walletAddress: string;
+  onDisconnect: () => void;
+}) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const truncatedAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="absolute top-full right-0 mt-2 w-56 rounded-xl shadow-2xl border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200"
+      style={{
+        background: theme.surface,
+        borderColor: theme.stroke,
+        boxShadow: `0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px ${theme.stroke}`,
+      }}
+    >
+      <div className="p-3">
+        <div className="px-3 py-2 mb-2">
+          <p className="text-xs mb-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+            Connected Wallet
+          </p>
+          <p className="text-sm font-mono" style={{ color: theme.text }}>
+            {truncatedAddress}
+          </p>
+        </div>
+        <div
+          className="h-px mb-2"
+          style={{ background: theme.stroke }}
+        />
+        <button
+          onClick={() => {
+            onDisconnect();
+            onClose();
+          }}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all text-left"
+          style={{
+            color: theme.text,
+            fontFamily: fonts.body,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = theme.surfaceAlt;
+            e.currentTarget.style.color = theme.primary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = theme.text;
+          }}
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="text-sm">Disconnect</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function OstiumHeader({ currentTime }: { currentTime: string }) {
+  const { authenticated, user, login, logout } = usePrivy();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = (label: string) => {
@@ -140,7 +222,7 @@ export function OstiumHeader({ currentTime }: { currentTime: string }) {
   const handleMouseLeave = () => {
     closeTimeoutRef.current = setTimeout(() => {
       setOpenDropdown(null);
-    }, 150); // Small delay to allow moving cursor to dropdown
+    }, 150);
   };
 
   useEffect(() => {
@@ -150,6 +232,10 @@ export function OstiumHeader({ currentTime }: { currentTime: string }) {
       }
     };
   }, []);
+
+  const truncatedAddress = user?.wallet?.address
+    ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}`
+    : "";
 
   return (
     <header
@@ -240,19 +326,53 @@ export function OstiumHeader({ currentTime }: { currentTime: string }) {
               />
               {currentTime}
             </div>
+
+            {/* Wallet Connect Button */}
+            {authenticated && user?.wallet?.address ? (
+              <div className="relative">
+                <button
+                  onClick={() => setWalletDropdownOpen(!walletDropdownOpen)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border ${hoverLiftClass}`}
+                  style={{
+                    borderColor: walletDropdownOpen ? theme.primary : theme.stroke,
+                    background: walletDropdownOpen ? theme.primarySoft : "transparent",
+                    color: theme.text,
+                    fontFamily: fonts.body,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Wallet className="w-4 h-4" style={{ color: theme.primary }} />
+                  {truncatedAddress}
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${walletDropdownOpen ? "rotate-180" : ""}`}
+                    style={{ color: theme.textMuted }}
+                  />
+                </button>
+                <WalletDropdown
+                  isOpen={walletDropdownOpen}
+                  onClose={() => setWalletDropdownOpen(false)}
+                  walletAddress={user.wallet.address}
+                  onDisconnect={logout}
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => login()}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg ${hoverLiftClass}`}
+                style={{
+                  background: theme.primary,
+                  color: "#0B0603",
+                  fontFamily: fonts.heading,
+                  cursor: "pointer",
+                }}
+              >
+                <Wallet className="w-4 h-4" />
+                Connect Wallet
+              </button>
+            )}
+
             <button
-              className={`hidden sm:flex px-4 py-2 rounded-lg text-sm font-medium border ${hoverLiftClass}`}
-              style={{
-                borderColor: theme.stroke,
-                color: theme.text,
-                fontFamily: fonts.body,
-                cursor: "pointer",
-              }}
-            >
-              Enable 1CT
-            </button>
-            <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg ${hoverLiftClass}`}
+              className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg ${hoverLiftClass}`}
               style={{
                 background: theme.primary,
                 color: "#0B0603",
@@ -333,4 +453,3 @@ export function OstiumFooter() {
     </footer>
   );
 }
-

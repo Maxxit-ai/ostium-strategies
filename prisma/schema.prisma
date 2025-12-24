@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model agent_telegram_users {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agent_id              String                 @db.Uuid
+  telegram_alpha_user_id String                @db.Uuid
+  created_at            DateTime               @default(now()) @db.Timestamptz(6)
+  agents                agents                 @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+  telegram_alpha_users  telegram_alpha_users   @relation(fields: [telegram_alpha_user_id], references: [id], onDelete: Cascade)
+
+  @@unique([agent_id, telegram_alpha_user_id])
+  @@index([agent_id])
+  @@index([telegram_alpha_user_id])
+}
+
+model user_agent_addresses {
+  id                              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_wallet                     String    @unique
+  hyperliquid_agent_address       String?   @unique
+  hyperliquid_agent_key_encrypted String?
+  hyperliquid_agent_key_iv        String?
+  hyperliquid_agent_key_tag       String?
+  ostium_agent_address            String?   @unique
+  ostium_agent_key_encrypted      String?
+  ostium_agent_key_iv             String?
+  ostium_agent_key_tag            String?
+  created_at                      DateTime  @default(now()) @db.Timestamptz(6)
+  last_used_at                    DateTime? @db.Timestamptz(6)
+
+  @@index([user_wallet])
+  @@index([hyperliquid_agent_address])
+  @@index([ostium_agent_address])
+}
+
+model user_trading_preferences {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_wallet               String    @unique
+  risk_tolerance            Int       @default(50)
+  trade_frequency           Int       @default(50)
+  social_sentiment_weight   Int       @default(50)
+  price_momentum_focus      Int       @default(50)
+  market_rank_priority      Int       @default(50)
+  created_at                DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([user_wallet])
+}
+
+model agent_deployments {
+  id                              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agent_id                        String              @db.Uuid
+  user_wallet                     String
+  safe_wallet                     String
+  status                          deployment_status_t @default(ACTIVE)
+  sub_active                      Boolean             @default(true)
+  sub_started_at                  DateTime            @default(now()) @db.Timestamptz(6)
+  trial_ends_at                   DateTime?           @db.Timestamptz(6)
+  next_billing_at                 DateTime?           @db.Timestamptz(6)
+  module_enabled                  Boolean             @default(false)
+  module_address                  String?
+  enabled_venues                  String[]            @default(["OSTIUM"])
+  risk_tolerance                  Int                 @default(50)
+  trade_frequency                 Int                 @default(50)
+  social_sentiment_weight         Int                 @default(50)
+  price_momentum_focus            Int                 @default(50)
+  market_rank_priority            Int                 @default(50)
+  agents                          agents              @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+
+  @@index([agent_id])
+  @@index([user_wallet])
+  @@index([user_wallet, agent_id])
+}
+
+model agents {
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creator_wallet            String
+  name                      String
+  venue                     venue_t
+  weights                   Int[]                       @db.SmallInt
+  apr_30d                   Float?                      @db.Real
+  apr_90d                   Float?                      @db.Real
+  apr_si                    Float?                      @db.Real
+  sharpe_30d                Float?                      @db.Real
+  profit_receiver_address   String
+  proof_of_intent_message   String?
+  proof_of_intent_signature String?
+  proof_of_intent_timestamp DateTime?                   @db.Timestamptz(6)
+  status                    agent_status_t?             @default(PUBLIC)
+  agent_deployments         agent_deployments[]
+  agent_telegram_users      agent_telegram_users[]
+}
+
+model telegram_alpha_users {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  telegram_user_id      String                  @unique
+  telegram_username     String?
+  first_name            String?
+  last_name             String?
+  impact_factor         Float                   @default(0.5) @db.Real
+  is_active             Boolean                 @default(true)
+  lazy_trader           Boolean                 @default(false)
+  public_source         Boolean                 @default(false)
+  user_wallet           String?
+  last_message_at       DateTime?               @db.Timestamptz(6)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  agent_telegram_users  agent_telegram_users[]
+
+  @@index([is_active])
+  @@index([telegram_user_id])
+  @@index([lazy_trader])
+  @@index([public_source])
+  @@index([user_wallet])
+}
+
+/// Temporary cache table for lazy trading link codes
+model lazy_trading_link_cache {
+  link_code   String   @id @db.VarChar(50)
+  user_wallet String   @db.VarChar(255)
+  expires_at  DateTime @db.Timestamptz(6)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([expires_at])
+  @@index([user_wallet])
+}
+
+enum agent_status_t {
+  DRAFT
+  PUBLIC
+  PRIVATE
+}
+
+enum deployment_status_t {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum venue_t {
+  SPOT
+  GMX
+  HYPERLIQUID
+  OSTIUM
+  MULTI
+}
+

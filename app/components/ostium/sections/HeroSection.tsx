@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Badge, Card, hoverLiftClass } from "../ui";
+import { ArrowRight, Zap } from "lucide-react";
+import { Card, hoverLiftClass } from "../ui";
 import { fonts, theme } from "../theme";
 import PixelBlast from "../PixelBlast";
 
@@ -51,8 +51,8 @@ export function HeroSection() {
           sources and executes automatically on Ostium—without ever touching your keys.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          <Link href="https://www.maxxit.ai/">
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <Link href="/lazy-trading">
             <button
               className={`group flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold ${hoverLiftClass}`}
               style={{
@@ -62,25 +62,60 @@ export function HeroSection() {
                 cursor: "pointer",
               }}
             >
+              <Zap className="w-5 h-5" />
+              Lazy Trading
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </Link>
+          <Link href="https://www.maxxit.ai/">
+            <button
+              className={`group flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold border backdrop-blur-sm ${hoverLiftClass}`}
+              style={{
+                borderColor: theme.stroke,
+                color: theme.text,
+                fontFamily: fonts.heading,
+                cursor: "pointer",
+              }}
+            >
               Create Your Trading Clone
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </Link>
-          <button
-            className={`flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold border backdrop-blur-sm ${hoverLiftClass}`}
+        </div>
+
+        {/* Lazy Trading Banner */}
+        {/* <Link href="/lazy-trading">
+          <div
+            className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl mb-10 ${hoverLiftClass}`}
             style={{
-              borderColor: theme.stroke,
-              color: theme.text,
-              fontFamily: fonts.heading,
+              background: theme.primarySoft,
+              border: `1px solid ${theme.primaryBorder}`,
               cursor: "pointer",
             }}
-            onClick={() =>
-              document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })
-            }
           >
-            How It Works
-          </button>
-        </div>
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: theme.primary }}
+            >
+              <Zap className="w-4 h-4" style={{ color: theme.bg }} />
+            </div>
+            <div className="text-left">
+              <p
+                className="text-sm font-semibold"
+                style={{ color: theme.primary, fontFamily: fonts.heading }}
+              >
+                New: Lazy Trading Mode
+              </p>
+              <p
+                className="text-xs"
+                style={{ color: theme.textMuted, fontFamily: fonts.body }}
+              >
+                Set up in 3 minutes • Enable 1-click trading • Link your Telegram
+              </p>
+            </div>
+            <ArrowRight className="w-5 h-5" style={{ color: theme.primary }} />
+          </div>
+        </Link> */}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
           {[
@@ -109,4 +144,3 @@ export function HeroSection() {
     </section>
   );
 }
-
