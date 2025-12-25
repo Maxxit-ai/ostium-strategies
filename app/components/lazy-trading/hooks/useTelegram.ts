@@ -1,4 +1,5 @@
 import { TelegramUser } from "./useLazyTrading";
+import { apiGet, apiPost } from "@/app/lib/api";
 
 export function useTelegram(
   userWallet: string | undefined,
@@ -19,17 +20,12 @@ export function useTelegram(
 
     setCheckingTelegram(true);
     try {
-      const queryParams = new URLSearchParams({
-        userWallet,
-      });
+      const params: Record<string, string> = { userWallet };
       if (linkCode) {
-        queryParams.append("linkCode", linkCode);
+        params.linkCode = linkCode;
       }
 
-      const response = await fetch(
-        `/api/lazy-trading/check-telegram-status?${queryParams.toString()}`
-      );
-      const data = await response.json();
+      const data = await apiGet("/api/lazy-trading/check-telegram-status", params);
 
       if (data.success && data.connected && data.telegramUser) {
         setTelegramUser(data.telegramUser);
@@ -54,13 +50,7 @@ export function useTelegram(
     setError("");
 
     try {
-      const response = await fetch("/api/lazy-trading/generate-telegram-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userWallet }),
-      });
-
-      const data = await response.json();
+      const data = await apiPost("/api/lazy-trading/generate-telegram-link", { userWallet });
 
       if (data.success) {
         if (data.alreadyLinked) {
@@ -85,4 +75,3 @@ export function useTelegram(
     generateTelegramLink,
   };
 }
-

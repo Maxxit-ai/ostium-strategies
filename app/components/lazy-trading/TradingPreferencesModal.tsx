@@ -79,7 +79,7 @@ export function TradingPreferencesForm({
 
   const loadPreferences = async () => {
     try {
-      const response = await fetch(`/api/user/trading-preferences?wallet=${userWallet}`);
+      const response = await fetch(`https://7dfbd74471e1.ngrok-free.app/api/user/trading-preferences?wallet=${userWallet}`);
       if (response.ok) {
         const data = await response.json();
         if (data.preferences) {
@@ -128,7 +128,7 @@ export function TradingPreferencesForm({
       }
 
       // Otherwise, save to API as usual
-      const response = await fetch('/api/user/trading-preferences', {
+      const response = await fetch('https://92742ee4d26b.ngrok-free.app/api/user/trading-preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

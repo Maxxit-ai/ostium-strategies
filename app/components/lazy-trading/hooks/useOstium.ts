@@ -2,6 +2,7 @@
 
 import { ethers } from "ethers";
 import { getOstiumConfig } from "@/app/lib/ostium-config";
+import { apiGet } from "@/app/lib/api";
 
 // ABI for Ostium Trading Contract - setDelegate function
 const OSTIUM_TRADING_ABI = ["function setDelegate(address delegate) external"];
@@ -45,29 +46,30 @@ export function useOstium(
     }
 
     try {
-      console.log("[Ostium] Checking status for wallet:", userWallet, "agent:", ostiumAgentAddress);
+      console.log(
+        "[Ostium] Checking status for wallet:",
+        userWallet,
+        "agent:",
+        ostiumAgentAddress
+      );
 
       // Check delegation status
-      const delegationResponse = await fetch(
-        `/api/ostium/check-delegation-status?userWallet=${userWallet}&agentAddress=${ostiumAgentAddress}`
+      const delegationData = await apiGet(
+        "/api/ostium/check-delegation-status",
+        {
+          userWallet,
+          agentAddress: ostiumAgentAddress,
+        }
       );
-
-      if (delegationResponse.ok) {
-        const delegationData = await delegationResponse.json();
-        console.log("[Ostium] Delegation status:", delegationData);
-        setDelegationComplete(delegationData.isDelegatedToAgent === true);
-      }
+      console.log("[Ostium] Delegation status:", delegationData);
+      setDelegationComplete(delegationData.isDelegatedToAgent === true);
 
       // Check USDC allowance
-      const allowanceResponse = await fetch(
-        `/api/ostium/check-approval-status?userWallet=${userWallet}`
-      );
-
-      if (allowanceResponse.ok) {
-        const allowanceData = await allowanceResponse.json();
-        console.log("[Ostium] Allowance status:", allowanceData);
-        setAllowanceComplete(allowanceData.hasApproval === true);
-      }
+      const allowanceData = await apiGet("/api/ostium/check-approval-status", {
+        userWallet,
+      });
+      console.log("[Ostium] Allowance status:", allowanceData);
+      setAllowanceComplete(allowanceData.hasApproval === true);
     } catch (err) {
       console.error("[Ostium] Error checking Ostium status:", err);
     }
@@ -102,7 +104,12 @@ export function useOstium(
       const ethersProvider = new ethers.providers.Web3Provider(provider);
       const network = await ethersProvider.getNetwork();
 
-      console.log("[Ostium] Current network:", network.chainId, "Required:", ARBITRUM_CHAIN_ID);
+      console.log(
+        "[Ostium] Current network:",
+        network.chainId,
+        "Required:",
+        ARBITRUM_CHAIN_ID
+      );
 
       // Check network and switch if needed
       if (network.chainId !== ARBITRUM_CHAIN_ID) {
@@ -123,7 +130,9 @@ export function useOstium(
       }
 
       // Get fresh provider after potential network switch
-      const freshProvider = new ethers.providers.Web3Provider((window as any).ethereum);
+      const freshProvider = new ethers.providers.Web3Provider(
+        (window as any).ethereum
+      );
       const signer = freshProvider.getSigner();
       const contract = new ethers.Contract(
         OSTIUM_TRADING_CONTRACT,
@@ -134,10 +143,17 @@ export function useOstium(
       console.log("[Ostium] Setting delegate to:", ostiumAgentAddress);
       console.log("[Ostium] Trading Contract:", OSTIUM_TRADING_CONTRACT);
 
-      const gasEstimate = await contract.estimateGas.setDelegate(ostiumAgentAddress);
+      const gasEstimate = await contract.estimateGas.setDelegate(
+        ostiumAgentAddress
+      );
       const gasLimit = gasEstimate.mul(150).div(100);
 
-      console.log("[Ostium] Gas estimate:", gasEstimate.toString(), "with buffer:", gasLimit.toString());
+      console.log(
+        "[Ostium] Gas estimate:",
+        gasEstimate.toString(),
+        "with buffer:",
+        gasLimit.toString()
+      );
 
       const tx = await contract.setDelegate(ostiumAgentAddress, { gasLimit });
       console.log("[Ostium] Delegation tx hash:", tx.hash);
@@ -209,7 +225,12 @@ export function useOstium(
 
       const gasWithBuffer = gasEstimate.mul(150).div(100);
 
-      console.log("[Ostium] Gas estimate:", gasEstimate.toString(), "with buffer:", gasWithBuffer.toString());
+      console.log(
+        "[Ostium] Gas estimate:",
+        gasEstimate.toString(),
+        "with buffer:",
+        gasWithBuffer.toString()
+      );
 
       // Send transaction using eth_sendTransaction (matching reference)
       const txHash = await provider.request({
@@ -261,7 +282,7 @@ export function useOstium(
     }
 
     const config = getConfig();
-    
+
     setLoading(true);
     setError("");
     setSigningStep("idle");
@@ -273,16 +294,19 @@ export function useOstium(
 
       // Step 1: Check and perform delegation if needed
       console.log("[Ostium] Step 1: Checking delegation status...");
-      const delegationResponse = await fetch(
-        `/api/ostium/check-delegation-status?userWallet=${userWallet}&agentAddress=${ostiumAgentAddress}`
+      const delegationData = await apiGet(
+        "/api/ostium/check-delegation-status",
+        {
+          userWallet,
+          agentAddress: ostiumAgentAddress,
+        }
       );
-      const delegationData = await delegationResponse.json();
       console.log("[Ostium] Delegation check result:", delegationData);
 
       if (!delegationData.isDelegatedToAgent) {
         console.log("[Ostium] Delegation not set, requesting signature...");
         setSigningStep("delegation");
-        
+
         const delegationSuccess = await approveDelegation();
         if (!delegationSuccess) {
           console.log("[Ostium] Delegation failed or rejected");
@@ -298,16 +322,15 @@ export function useOstium(
 
       // Step 2: Check and perform USDC approval if needed
       console.log("[Ostium] Step 2: Checking USDC allowance status...");
-      const allowanceResponse = await fetch(
-        `/api/ostium/check-approval-status?userWallet=${userWallet}`
-      );
-      const allowanceData = await allowanceResponse.json();
+      const allowanceData = await apiGet("/api/ostium/check-approval-status", {
+        userWallet,
+      });
       console.log("[Ostium] Allowance check result:", allowanceData);
 
       if (!allowanceData.hasApproval) {
         console.log("[Ostium] Allowance not set, requesting signature...");
         setSigningStep("allowance");
-        
+
         const allowanceSuccess = await approveUsdc();
         if (!allowanceSuccess) {
           console.log("[Ostium] Allowance approval failed or rejected");

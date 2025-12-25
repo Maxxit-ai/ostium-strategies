@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Activity, ExternalLink, Shield, Zap, Sparkles } from "lucide-react";
+import { Check, Activity, ExternalLink, Shield, Zap, Sparkles, ArrowRight } from "lucide-react";
 import { theme, fonts } from "../ostium/theme";
 import { hoverLiftClass } from "../ostium/ui";
+import { blockExplorerUrl } from "@/app/lib/ostium-config";
 
 interface OstiumStepProps {
   ostiumAgentAddress: string;
@@ -13,6 +14,7 @@ interface OstiumStepProps {
   txHash: string | null;
   onEnable1ClickTrading: () => void;
   onCheckStatus: () => void;
+  onContinue?: () => void;
 }
 
 export function OstiumStep({
@@ -24,14 +26,19 @@ export function OstiumStep({
   txHash,
   onEnable1ClickTrading,
   onCheckStatus,
+  onContinue,
 }: OstiumStepProps) {
   const isComplete = delegationComplete && allowanceComplete;
 
   const getButtonText = () => {
-    if (isComplete) return "Enabled";
     if (signingStep === "delegation") return "Sign Delegation (1/2)...";
     if (signingStep === "allowance") return "Sign Allowance (2/2)...";
     if (loading) return "Processing...";
+    
+    // Show specific action when only one step is pending
+    if (!delegationComplete && allowanceComplete) return "Sign Delegation";
+    if (delegationComplete && !allowanceComplete) return "Sign Allowance";
+    
     return "Enable 1-Click Trading";
   };
 
@@ -158,12 +165,12 @@ export function OstiumStep({
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action Button - Show Enable button when not complete */}
       {!isComplete && (
         <button
           onClick={onEnable1ClickTrading}
-          disabled={loading || isComplete || !ostiumAgentAddress}
-          className={`w-full py-3  cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
+          disabled={loading || !ostiumAgentAddress}
+          className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
           style={{
             background: theme.primary,
             color: theme.bg,
@@ -172,7 +179,7 @@ export function OstiumStep({
         >
           {loading ? (
             <>
-              <Activity className="w-4 h-4" />
+              <Activity className="w-4 h-4 animate-spin" />
               {getButtonText()}
             </>
           ) : (
@@ -181,6 +188,23 @@ export function OstiumStep({
               {getButtonText()}
             </>
           )}
+        </button>
+      )}
+
+      {/* Continue Button - Show when complete */}
+      {isComplete && onContinue && (
+        <button
+          onClick={onContinue}
+          className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 ${hoverLiftClass}`}
+          style={{
+            background: theme.success,
+            color: theme.bg,
+            fontFamily: fonts.heading,
+          }}
+        >
+          <Check className="w-4 h-4" />
+          Continue to Next Step
+          <ArrowRight className="w-4 h-4" />
         </button>
       )}
 
@@ -209,13 +233,13 @@ export function OstiumStep({
             Transaction Submitted
           </p>
           <a
-            href={`https://arbiscan.io/tx/${txHash}`}
+            href={`${blockExplorerUrl}/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs flex items-center gap-1"
             style={{ color: theme.textMuted, fontFamily: fonts.body }}
           >
-            View on Arbiscan <ExternalLink className="w-3 h-3" />
+            View on Explorer <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       )}

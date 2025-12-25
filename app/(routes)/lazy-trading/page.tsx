@@ -20,6 +20,7 @@ import { useOstium } from "@/app/components/lazy-trading/hooks/useOstium";
 import { useEthSending } from "@/app/components/lazy-trading/hooks/useEthSending";
 import { AlertCircle, Zap } from "lucide-react";
 import { fonts } from "@/app/components/ostium/theme";
+import { apiPost } from "@/app/lib/api";
 
 export default function LazyTrading() {
   const router = useRouter();
@@ -169,17 +170,11 @@ export default function LazyTrading() {
     setError("");
 
     try {
-      const response = await fetch("/api/lazy-trading/create-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userWallet: user.wallet.address,
-          telegramAlphaUserId: telegramUser.id,
-          tradingPreferences: tradingPreferences,
-        }),
+      const data = await apiPost("/api/lazy-trading/create-agent", {
+        userWallet: user.wallet.address,
+        telegramAlphaUserId: telegramUser.id,
+        tradingPreferences: tradingPreferences,
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setAgentId(data.agent.id);
@@ -198,14 +193,11 @@ export default function LazyTrading() {
     if (!user?.wallet?.address) return;
 
     try {
-      const response = await fetch("/api/ostium/generate-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userWallet: user.wallet.address }),
+      const data = await apiPost("/api/ostium/generate-agent", {
+        userWallet: user.wallet.address,
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (data.success) {
         setOstiumAgentAddress(data.agentAddress);
       }
     } catch (err) {
@@ -311,6 +303,7 @@ export default function LazyTrading() {
               txHash={txHash}
               onEnable1ClickTrading={enable1ClickTrading}
               onCheckStatus={checkOstiumStatus}
+              onContinue={() => setStep("preferences")}
             />
           )}
 

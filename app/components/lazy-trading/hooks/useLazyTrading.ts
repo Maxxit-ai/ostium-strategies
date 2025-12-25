@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { TradingPreferences } from "../TradingPreferencesModal";
+import { apiGet } from "@/app/lib/api";
 
 // Updated step order: wallet → ostium → preferences → telegram → complete
-export type Step = "wallet" | "ostium" | "preferences" | "telegram" | "complete";
+export type Step =
+  | "wallet"
+  | "ostium"
+  | "preferences"
+  | "telegram"
+  | "complete";
 
 export interface TelegramUser {
   id: string;
@@ -34,11 +40,14 @@ export function useLazyTrading() {
 
   // Ostium state
   const [ostiumAgentAddress, setOstiumAgentAddress] = useState<string>("");
-  const [hyperliquidAgentAddress, setHyperliquidAgentAddress] = useState<string>("");
+  const [hyperliquidAgentAddress, setHyperliquidAgentAddress] =
+    useState<string>("");
   const [delegationComplete, setDelegationComplete] = useState(false);
   const [allowanceComplete, setAllowanceComplete] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [signingStep, setSigningStep] = useState<"idle" | "delegation" | "allowance" | "done">("idle");
+  const [signingStep, setSigningStep] = useState<
+    "idle" | "delegation" | "allowance" | "done"
+  >("idle");
 
   // ETH sending state
   const [ethAmount, setEthAmount] = useState<string>("0.005");
@@ -63,10 +72,9 @@ export function useLazyTrading() {
     if (!user?.wallet?.address) return;
 
     try {
-      const response = await fetch(
-        `/api/lazy-trading/get-setup-status?userWallet=${user.wallet.address}`
-      );
-      const data = await response.json();
+      const data = await apiGet("/api/lazy-trading/get-setup-status", {
+        userWallet: user.wallet.address,
+      });
 
       if (data.success && data.hasSetup) {
         if (data.agent) {
@@ -101,7 +109,7 @@ export function useLazyTrading() {
         const stepMapping: Record<string, Step> = {
           wallet: "wallet",
           telegram: "telegram",
-          preferences: "preferences", 
+          preferences: "preferences",
           ostium: "ostium",
           complete: "complete",
         };
