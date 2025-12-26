@@ -19,14 +19,15 @@ import {
 } from "lucide-react";
 import { theme, fonts } from "../ostium/theme";
 import { hoverLiftClass, Card } from "../ostium/ui";
+import { useRouter } from "next/navigation";
+import PixelBlast from "../ostium/PixelBlast";
 
-interface LazyTradingLandingProps {
-  onGetStarted: () => void;
-}
-
-export function LazyTradingLanding({ onGetStarted }: LazyTradingLandingProps) {
+export function LazyTradingLanding() {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
-
+  const router = useRouter();
+  const onGetStarted = () => {
+    router.push("/lazy-trading/setup");
+  };
   const workflowSteps = [
     {
       icon: MessageCircle,
@@ -81,12 +82,27 @@ export function LazyTradingLanding({ onGetStarted }: LazyTradingLandingProps) {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background gradient */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(ellipse 80% 50% at 50% -20%, ${theme.primarySoft} 0%, transparent 50%)`,
-          }}
-        />
+        <div className="absolute inset-0 pointer-events-none">
+          <PixelBlast
+            variant="circle"
+            pixelSize={6}
+            color="#262625"
+            patternScale={3}
+            patternDensity={1.3}
+            pixelSizeJitter={0.5}
+            enableRipples
+            rippleSpeed={0.4}
+            rippleThickness={0.12}
+            rippleIntensityScale={1.5}
+            liquid
+            liquidStrength={0.12}
+            liquidRadius={1.2}
+            liquidWobbleSpeed={5}
+            speed={0.6}
+            edgeFade={0.25}
+            transparent
+          />
+        </div>
 
         <div className="relative max-w-5xl mx-auto px-6 py-16 md:py-24 text-center">
           {/* Badge */}
@@ -136,7 +152,7 @@ export function LazyTradingLanding({ onGetStarted }: LazyTradingLandingProps) {
           {/* CTA Buttons */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
             <button
-              onClick={onGetStarted}
+              onClick={() => router.push("/lazy-trading/setup")}
               className={`group flex items-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold ${hoverLiftClass}`}
               style={{
                 background: theme.primary,
@@ -227,9 +243,8 @@ export function LazyTradingLanding({ onGetStarted }: LazyTradingLandingProps) {
                   onMouseLeave={() => setHoveredStep(null)}
                 >
                   <div
-                    className={`p-8 rounded-2xl border transition-all duration-300 ${
-                      hoveredStep === idx ? "transform -translate-y-2" : ""
-                    }`}
+                    className={`p-8 rounded-2xl border transition-all duration-300 ${hoveredStep === idx ? "transform -translate-y-2" : ""
+                      }`}
                     style={{
                       background: hoveredStep === idx ? theme.surfaceAlt : theme.bg,
                       borderColor: hoveredStep === idx ? theme.primaryBorder : theme.stroke,
@@ -510,7 +525,7 @@ export function LazyTradingLanding({ onGetStarted }: LazyTradingLandingProps) {
           </p>
 
           <button
-            onClick={onGetStarted}
+            onClick={() => router.push("/lazy-trading/setup")}
             className={`group inline-flex items-center gap-3 px-10 py-5 rounded-xl text-xl font-bold ${hoverLiftClass}`}
             style={{
               background: theme.primary,

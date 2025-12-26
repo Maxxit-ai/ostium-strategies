@@ -4,7 +4,8 @@
  */
 
 // Backend API base URL - update this when deploying
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://maxxit.ai';
+// IMPORTANT: Use www.maxxit.ai to avoid CORS preflight redirect issues
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.maxxit.ai';
 
 /**
  * Default headers for API requests
@@ -77,4 +78,6 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     },
   });
 }
+
+
 

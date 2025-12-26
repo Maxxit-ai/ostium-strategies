@@ -1,9 +1,245 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import React from 'react';
 import { X, Activity } from 'lucide-react';
 import { Slider, SliderRange, SliderThumb, SliderTrack } from '@radix-ui/react-slider';
 import { theme, fonts } from '../ostium/theme';
 import { apiGet, apiPost } from '@/app/lib/api';
+
+interface SliderRowProps {
+  title: string;
+  helper: string;
+  value: number;
+  onChange: (val: number) => void;
+  left: string;
+  right: string;
+  badge: string;
+  description: string;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const SliderRow = memo(function SliderRow({
+  title,
+  helper,
+  value,
+  onChange,
+  left,
+  right,
+  badge,
+  description,
+  scrollContainerRef,
+}: SliderRowProps) {
+  const [inputValue, setInputValue] = useState(value.toString());
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [tempValue, setTempValue] = useState(value);
+  const sliderRowRef = useRef<HTMLDivElement>(null);
+
+  // Only sync input with slider value when input is not focused
+  useEffect(() => {
+    if (!isInputFocused) {
+      setInputValue(value.toString());
+    }
+    if (!isDragging) {
+      setTempValue(value);
+    }
+  }, [value, isInputFocused, isDragging]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow empty string or valid numbers with optional decimals
+    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+      setInputValue(val);
+    }
+  };
+
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsInputFocused(true);
+    // Prevent browser from scrolling input into view
+    e.target.scrollIntoView = () => { };
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+
+    // Preserve scroll position before state update
+    const container = scrollContainerRef.current;
+    const scrollPosition = container?.scrollTop ?? 0;
+    const activeElement = document.activeElement as HTMLElement;
+
+    // Validate and correct on blur
+    const num = parseFloat(inputValue);
+    if (isNaN(num) || num < 0 || inputValue === '') {
+      onChange(0);
+      setInputValue('0');
+    } else if (num > 100) {
+      onChange(100);
+      setInputValue('100');
+    } else {
+      const rounded = Math.round(num);
+      onChange(rounded);
+      setInputValue(rounded.toString());
+    }
+
+    // Restore scroll position after state update
+    requestAnimationFrame(() => {
+      if (container) {
+        container.scrollTop = scrollPosition;
+      }
+      // Prevent focus from causing scroll
+      if (activeElement && activeElement !== document.body) {
+        activeElement.blur();
+      }
+    });
+  };
+
+  return (
+    <div
+      ref={sliderRowRef}
+      className="border p-5 space-y-4 rounded-lg"
+      style={{
+        borderColor: theme.primaryBorder,
+        background: theme.primarySoft,
+      }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <h3 className="text-base font-bold" style={{ color: theme.text, fontFamily: fonts.heading }}>
+            {title}
+          </h3>
+          <p className="text-xs mt-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+            {helper}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-xs font-bold uppercase px-2 py-1 rounded"
+            style={{
+              color: theme.primary,
+              background: theme.primarySoft,
+              fontFamily: fonts.body,
+            }}
+          >
+            {badge}
+          </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleInputBlur();
+                e.currentTarget.blur();
+              }
+            }}
+            className="w-16 px-2 py-1.5 text-center border-2 font-mono font-bold text-sm rounded focus:outline-none transition-colors"
+            style={{
+              borderColor: theme.primaryBorder,
+              background: theme.bg,
+              color: theme.primary,
+              fontFamily: fonts.body,
+            }}
+            placeholder="0-100"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs px-1 font-medium" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+          <span>{left}</span>
+          <span>{right}</span>
+        </div>
+
+        <Slider
+          className="relative flex items-center select-none touch-none w-full h-12 group cursor-pointer"
+          value={[tempValue]}
+          onValueChange={(vals) => {
+            const v = Math.min(100, Math.max(0, vals[0]));
+            setTempValue(v);
+            setIsDragging(true);
+            if (!isInputFocused) {
+              setInputValue(Math.round(v).toString());
+            }
+          }}
+          onValueCommit={(vals) => {
+            const v = Math.min(100, Math.max(0, vals[0]));
+            const rounded = Math.round(v);
+
+            const container = scrollContainerRef.current;
+            const scrollPosition = container?.scrollTop ?? 0;
+
+            onChange(rounded);
+            setTempValue(rounded);
+            setIsDragging(false);
+
+            requestAnimationFrame(() => {
+              if (container) {
+                container.scrollTop = scrollPosition;
+              }
+            });
+          }}
+          max={100}
+          min={0}
+          step={0.1}
+          draggable={true}
+        >
+          <div
+            className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              background: `linear-gradient(to right, ${theme.primary}15, transparent, ${theme.primary}10)`,
+            }}
+          />
+          <SliderTrack
+            className="relative grow rounded-full h-3 cursor-pointer transition-colors shadow-inner overflow-hidden"
+            style={{
+              background: `${theme.textMuted}60`,
+            }}
+          >
+            <SliderRange
+              className="absolute h-full rounded-full"
+              style={{
+                background: `linear-gradient(to right, ${theme.primary}, ${theme.primary}60)`,
+                boxShadow: `0 0 10px rgba(0,0,0,0.45)`,
+              }}
+            />
+            <div
+              className="absolute inset-0 opacity-60 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at 10% 50%, rgba(255,255,255,0.18), transparent 35%), radial-gradient(circle at 90% 50%, rgba(255,255,255,0.18), transparent 35%)`,
+              }}
+            />
+          </SliderTrack>
+          <SliderThumb
+            className="relative flex items-center justify-center w-10 h-10 text-[11px] font-bold border-[3px] rounded-full hover:scale-110 focus:outline-none transition-all duration-150 cursor-grab active:cursor-grabbing active:scale-105 shadow-xl"
+            style={{
+              background: theme.primary,
+              color: theme.bg,
+              borderColor: theme.bg,
+              fontFamily: fonts.heading,
+            }}
+            aria-label={title}
+          >
+            {Math.round(tempValue)}
+          </SliderThumb>
+        </Slider>
+
+        <div className="flex justify-between text-xs px-1 font-mono" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+          <span>0</span>
+          <span>25</span>
+          <span>50</span>
+          <span>75</span>
+          <span>100</span>
+        </div>
+      </div>
+
+      <p className="text-xs leading-relaxed" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        {description}
+      </p>
+    </div>
+  );
+});
 
 export interface TradingPreferences {
   risk_tolerance: number;
@@ -164,243 +400,10 @@ export function TradingPreferencesForm({
     return 'Top Only';
   };
 
-  const SliderRow = ({
-    title,
-    helper,
-    value,
-    onChange,
-    left,
-    right,
-    badge,
-    description,
-  }: {
-    title: string;
-    helper: string;
-    value: number;
-    onChange: (val: number) => void;
-    left: string;
-    right: string;
-    badge: string;
-    description: string;
-  }) => {
-    const [inputValue, setInputValue] = useState(value.toString());
-    const [isInputFocused, setIsInputFocused] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const [tempValue, setTempValue] = useState(value);
-    const sliderRowRef = useRef<HTMLDivElement>(null);
-
-    // Only sync input with slider value when input is not focused
-    useEffect(() => {
-      if (!isInputFocused) {
-        setInputValue(value.toString());
-      }
-      if (!isDragging) {
-        setTempValue(value);
-      }
-    }, [value, isInputFocused, isDragging]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      // Allow empty string or valid numbers with optional decimals
-      if (val === '' || /^\d*\.?\d*$/.test(val)) {
-        setInputValue(val);
-      }
-    };
-
-    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsInputFocused(true);
-      // Prevent browser from scrolling input into view
-      e.target.scrollIntoView = () => { };
-    };
-
-    const handleInputBlur = () => {
-      setIsInputFocused(false);
-
-      // Preserve scroll position before state update
-      const container = scrollContainerRef.current;
-      const scrollPosition = container?.scrollTop ?? 0;
-      const activeElement = document.activeElement as HTMLElement;
-      const elementPosition = sliderRowRef.current?.offsetTop ?? 0;
-
-      // Validate and correct on blur
-      const num = parseFloat(inputValue);
-      if (isNaN(num) || num < 0 || inputValue === '') {
-        onChange(0);
-        setInputValue('0');
-      } else if (num > 100) {
-        onChange(100);
-        setInputValue('100');
-      } else {
-        const rounded = Math.round(num);
-        onChange(rounded);
-        setInputValue(rounded.toString());
-      }
-
-      // Restore scroll position after state update
-      requestAnimationFrame(() => {
-        if (container) {
-          container.scrollTop = scrollPosition;
-        }
-        // Prevent focus from causing scroll
-        if (activeElement && activeElement !== document.body) {
-          activeElement.blur();
-        }
-      });
-    };
-
-    return (
-      <div
-        // ref={sliderRowRef}
-        className="border p-5 space-y-4 rounded-lg"
-        style={{
-          borderColor: theme.primaryBorder,
-          background: theme.primarySoft,
-        }}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h3 className="text-base font-bold" style={{ color: theme.text, fontFamily: fonts.heading }}>
-              {title}
-            </h3>
-            <p className="text-xs mt-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
-              {helper}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span
-              className="text-xs font-bold uppercase px-2 py-1 rounded"
-              style={{
-                color: theme.primary,
-                background: theme.primarySoft,
-                fontFamily: fonts.body,
-              }}
-            >
-              {badge}
-            </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={inputValue}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleInputBlur();
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-16 px-2 py-1.5 text-center border-2 font-mono font-bold text-sm rounded focus:outline-none transition-colors"
-              style={{
-                borderColor: theme.primaryBorder,
-                background: theme.bg,
-                color: theme.primary,
-                fontFamily: fonts.body,
-              }}
-              placeholder="0-100"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs px-1 font-medium" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
-            <span>{left}</span>
-            <span>{right}</span>
-          </div>
-
-          <Slider
-            className="relative flex items-center select-none touch-none w-full h-12 group cursor-pointer"
-            value={[tempValue]}
-            onValueChange={(vals) => {
-              const v = Math.min(100, Math.max(0, vals[0]));
-              setTempValue(v);
-              setIsDragging(true);
-              if (!isInputFocused) {
-                setInputValue(Math.round(v).toString());
-              }
-            }}
-            onValueCommit={(vals) => {
-              const v = Math.min(100, Math.max(0, vals[0]));
-              const rounded = Math.round(v);
-
-              const container = scrollContainerRef.current;
-              const scrollPosition = container?.scrollTop ?? 0;
-
-              onChange(rounded);
-              setTempValue(rounded);
-              setIsDragging(false);
-
-              requestAnimationFrame(() => {
-                if (container) {
-                  container.scrollTop = scrollPosition;
-                }
-              });
-            }}
-            max={100}
-            min={0}
-            step={0.1}
-            draggable={true}
-          >
-            <div
-              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{
-                background: `linear-gradient(to right, ${theme.primary}15, transparent, ${theme.primary}10)`,
-              }}
-            />
-            <SliderTrack
-              className="relative grow rounded-full h-3 cursor-pointer transition-colors shadow-inner overflow-hidden"
-              style={{
-                background: `${theme.textMuted}60`,
-              }}
-            >
-              <SliderRange
-                className="absolute h-full rounded-full"
-                style={{
-                  background: `linear-gradient(to right, ${theme.primary}, ${theme.primary}60)`,
-                  boxShadow: `0 0 10px rgba(0,0,0,0.45)`,
-                }}
-              />
-              <div
-                className="absolute inset-0 opacity-60 pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle at 10% 50%, rgba(255,255,255,0.18), transparent 35%), radial-gradient(circle at 90% 50%, rgba(255,255,255,0.18), transparent 35%)`,
-                }}
-              />
-            </SliderTrack>
-            <SliderThumb
-              className="relative flex items-center justify-center w-10 h-10 text-[11px] font-bold border-[3px] rounded-full hover:scale-110 focus:outline-none transition-all duration-150 cursor-grab active:cursor-grabbing active:scale-105 shadow-xl"
-              style={{
-                background: theme.primary,
-                color: theme.bg,
-                borderColor: theme.bg,
-                fontFamily: fonts.heading,
-              }}
-              aria-label={title}
-            >
-              {Math.round(tempValue)}
-            </SliderThumb>
-          </Slider>
-
-          <div className="flex justify-between text-xs px-1 font-mono" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
-            <span>0</span>
-            <span>25</span>
-            <span>50</span>
-            <span>75</span>
-            <span>100</span>
-          </div>
-        </div>
-
-        <p className="text-xs leading-relaxed" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
-          {description}
-        </p>
-      </div>
-    );
-  };
-
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Helper function to preserve scroll position during state updates
-  const preserveScrollPosition = (callback: () => void) => {
+  const preserveScrollPosition = useCallback((callback: () => void) => {
     const container = scrollContainerRef.current;
     const scrollPosition = container?.scrollTop ?? 0;
 
@@ -412,7 +415,28 @@ export function TradingPreferencesForm({
         container.scrollTop = scrollPosition;
       }
     });
-  };
+  }, []);
+
+  // Memoized onChange handlers to prevent SliderRow re-renders
+  const handleRiskToleranceChange = useCallback((v: number) => {
+    preserveScrollPosition(() => setPreferences(prev => ({ ...prev, risk_tolerance: v })));
+  }, [preserveScrollPosition]);
+
+  const handleTradeFrequencyChange = useCallback((v: number) => {
+    preserveScrollPosition(() => setPreferences(prev => ({ ...prev, trade_frequency: v })));
+  }, [preserveScrollPosition]);
+
+  const handleSocialSentimentChange = useCallback((v: number) => {
+    preserveScrollPosition(() => setPreferences(prev => ({ ...prev, social_sentiment_weight: v })));
+  }, [preserveScrollPosition]);
+
+  const handlePriceMomentumChange = useCallback((v: number) => {
+    preserveScrollPosition(() => setPreferences(prev => ({ ...prev, price_momentum_focus: v })));
+  }, [preserveScrollPosition]);
+
+  const handleMarketRankChange = useCallback((v: number) => {
+    preserveScrollPosition(() => setPreferences(prev => ({ ...prev, market_rank_priority: v })));
+  }, [preserveScrollPosition]);
 
   return (
     <div
@@ -445,7 +469,7 @@ export function TradingPreferencesForm({
             title="Risk Tolerance"
             helper="How aggressive should sizing be?"
             value={preferences.risk_tolerance}
-            onChange={(v) => preserveScrollPosition(() => setPreferences({ ...preferences, risk_tolerance: v }))}
+            onChange={handleRiskToleranceChange}
             left="Conservative"
             right="Aggressive"
             badge={getLabel(preferences.risk_tolerance)}
@@ -456,13 +480,14 @@ export function TradingPreferencesForm({
                   ? 'Moderate positions (2-7% of balance)'
                   : 'Larger positions (5-10% of balance)'
             }
+            scrollContainerRef={scrollContainerRef}
           />
 
           <SliderRow
             title="Trade Frequency"
             helper="How often to take trades?"
             value={preferences.trade_frequency}
-            onChange={(v) => preserveScrollPosition(() => setPreferences({ ...preferences, trade_frequency: v }))}
+            onChange={handleTradeFrequencyChange}
             left="Patient"
             right="Active"
             badge={getFrequencyLabel(preferences.trade_frequency)}
@@ -473,13 +498,14 @@ export function TradingPreferencesForm({
                   ? 'Moderate confidence (>40%)'
                   : 'Most signals, including lower confidence'
             }
+            scrollContainerRef={scrollContainerRef}
           />
 
           <SliderRow
             title="Social Sentiment Impact"
             helper="Weight social media sentiment"
             value={preferences.social_sentiment_weight}
-            onChange={(v) => preserveScrollPosition(() => setPreferences({ ...preferences, social_sentiment_weight: v }))}
+            onChange={handleSocialSentimentChange}
             left="Ignore"
             right="Follow"
             badge={getLabel(preferences.social_sentiment_weight)}
@@ -490,13 +516,14 @@ export function TradingPreferencesForm({
                   ? 'Balanced consideration of social signals'
                   : 'Strong weight on social buzz'
             }
+            scrollContainerRef={scrollContainerRef}
           />
 
           <SliderRow
             title="Price Momentum Strategy"
             helper="Trend follow or contrarian?"
             value={preferences.price_momentum_focus}
-            onChange={(v) => preserveScrollPosition(() => setPreferences({ ...preferences, price_momentum_focus: v }))}
+            onChange={handlePriceMomentumChange}
             left="Contrarian"
             right="Momentum"
             badge={getMomentumLabel(preferences.price_momentum_focus)}
@@ -507,13 +534,14 @@ export function TradingPreferencesForm({
                   ? 'Balanced approach to price action'
                   : 'Follow strong trends and momentum'
             }
+            scrollContainerRef={scrollContainerRef}
           />
 
           <SliderRow
             title="Market Cap Preference"
             helper="Focus on large caps or any token"
             value={preferences.market_rank_priority}
-            onChange={(v) => preserveScrollPosition(() => setPreferences({ ...preferences, market_rank_priority: v }))}
+            onChange={handleMarketRankChange}
             left="Any Coin"
             right="Top Only"
             badge={getRankLabel(preferences.market_rank_priority)}
@@ -524,6 +552,7 @@ export function TradingPreferencesForm({
                   ? 'Slight preference for established tokens'
                   : 'Strong preference for top-ranked, liquid tokens'
             }
+            scrollContainerRef={scrollContainerRef}
           />
 
           <div

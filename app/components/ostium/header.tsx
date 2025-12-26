@@ -424,22 +424,9 @@ export function OstiumFooter() {
       style={{ borderColor: theme.stroke, background: theme.surfaceAlt }}
     >
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M4 4L12 12M12 12L20 4M12 12L4 20M12 12L20 20"
-              stroke={theme.primary}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span
-            className="font-semibold"
-            style={{ color: theme.primary, fontFamily: fonts.heading }}
-          >
-            OSTIUM
-          </span>
-        </div>
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/ostium-logo.png" alt="Ostium" width={110} height={110} />
+        </Link>
         <p
           className="text-xs text-center"
           style={{ color: theme.textMuted, fontFamily: fonts.body }}
