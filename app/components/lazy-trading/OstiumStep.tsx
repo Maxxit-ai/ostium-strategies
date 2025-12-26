@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Activity, ExternalLink, Shield, Zap, Sparkles, ArrowRight } from "lucide-react";
+import { Check, Activity, ExternalLink, Shield, Zap, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { theme, fonts } from "../ostium/theme";
 import { hoverLiftClass } from "../ostium/ui";
 import { blockExplorerUrl } from "@/app/lib/ostium-config";
@@ -15,6 +15,131 @@ interface OstiumStepProps {
   onEnable1ClickTrading: () => void;
   onCheckStatus: () => void;
   onContinue?: () => void;
+}
+
+// Loading step indicator component
+function LoadingStepIndicator({
+  signingStep,
+  delegationComplete,
+  allowanceComplete,
+  txHash
+}: {
+  signingStep: "idle" | "delegation" | "allowance" | "done";
+  delegationComplete: boolean;
+  allowanceComplete: boolean;
+  txHash: string | null;
+}) {
+  const getStepInfo = () => {
+    if (signingStep === "delegation") {
+      return {
+        title: "Signing Delegation",
+        description: "Please confirm the delegation transaction in your wallet...",
+        step: 1,
+        total: 2,
+      };
+    }
+    if (signingStep === "allowance") {
+      return {
+        title: "Signing Allowance",
+        description: "Please confirm the USDC allowance transaction in your wallet...",
+        step: 2,
+        total: 2,
+      };
+    }
+    if (txHash) {
+      return {
+        title: "Confirming Transaction",
+        description: "Waiting for blockchain confirmation...",
+        step: delegationComplete ? 2 : 1,
+        total: 2,
+      };
+    }
+    // Checking status - show whenever signingStep is idle (we're checking before signing)
+    if (signingStep === "idle") {
+      return {
+        title: "Checking Status",
+        description: "Verifying your current delegation and allowance status...",
+        step: 0,
+        total: 2,
+      };
+    }
+    return null;
+  };
+
+  const stepInfo = getStepInfo();
+  if (!stepInfo) return null;
+
+  return (
+    <div
+      className="p-4 rounded-lg space-y-3"
+      style={{
+        background: theme.primarySoft,
+        border: `1px solid ${theme.primaryBorder}`,
+      }}
+    >
+      {/* Progress indicator */}
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center"
+          style={{
+            background: theme.primary,
+          }}
+        >
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: theme.bg }} />
+        </div>
+        <div className="flex-1">
+          <p
+            className="text-sm font-semibold"
+            style={{ color: theme.primary, fontFamily: fonts.heading }}
+          >
+            {stepInfo.title}
+          </p>
+          <p
+            className="text-xs"
+            style={{ color: theme.textMuted, fontFamily: fonts.body }}
+          >
+            {stepInfo.description}
+          </p>
+        </div>
+        {stepInfo.step > 0 && (
+          <span
+            className="text-xs font-bold px-2 py-1 rounded"
+            style={{
+              background: theme.surface,
+              color: theme.primary,
+              fontFamily: fonts.body,
+            }}
+          >
+            {stepInfo.step}/{stepInfo.total}
+          </span>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div
+        className="h-1.5 rounded-full overflow-hidden"
+        style={{ background: theme.surface }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500 ease-out"
+          style={{
+            background: theme.primary,
+            width: stepInfo.step === 0 ? "10%" : `${(stepInfo.step / stepInfo.total) * 100}%`,
+          }}
+        />
+      </div>
+
+      {/* Step labels */}
+      <div className="flex justify-between text-xs" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        <span style={{ color: stepInfo.step >= 1 ? theme.primary : theme.textMuted }}>
+          Delegation
+        </span>
+        <span style={{ color: stepInfo.step >= 2 ? theme.primary : theme.textMuted }}>
+          Allowance
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function OstiumStep({
@@ -33,12 +158,12 @@ export function OstiumStep({
   const getButtonText = () => {
     if (signingStep === "delegation") return "Sign Delegation (1/2)...";
     if (signingStep === "allowance") return "Sign Allowance (2/2)...";
-    if (loading) return "Processing...";
-    
+    if (loading || signingStep === "idle") return "Processing...";
+
     // Show specific action when only one step is pending
     if (!delegationComplete && allowanceComplete) return "Sign Delegation";
     if (delegationComplete && !allowanceComplete) return "Sign Allowance";
-    
+
     return "Enable 1-Click Trading";
   };
 
@@ -165,11 +290,21 @@ export function OstiumStep({
         </div>
       </div>
 
-      {/* Action Button - Show Enable button when not complete */}
-      {!isComplete && (
+      {/* Loading Status Indicator - Show when loading */}
+      {loading && (
+        <LoadingStepIndicator
+          signingStep={signingStep}
+          delegationComplete={delegationComplete}
+          allowanceComplete={allowanceComplete}
+          txHash={txHash}
+        />
+      )}
+
+      {/* Action Button - Show Enable button when not complete and not loading */}
+      {!isComplete && !loading && (
         <button
           onClick={onEnable1ClickTrading}
-          disabled={loading || !ostiumAgentAddress}
+          disabled={!ostiumAgentAddress || loading || signingStep === "idle"}
           className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
           style={{
             background: theme.primary,
@@ -177,17 +312,8 @@ export function OstiumStep({
             fontFamily: fonts.heading,
           }}
         >
-          {loading ? (
-            <>
-              <Activity className="w-4 h-4 animate-spin" />
-              {getButtonText()}
-            </>
-          ) : (
-            <>
-              <Zap className="w-4 h-4" />
-              {getButtonText()}
-            </>
-          )}
+          <Zap className="w-4 h-4" />
+          {getButtonText()}
         </button>
       )}
 

@@ -1,15 +1,9 @@
-/**
- * Trading Preferences Modal - Agent HOW Configuration
- * 
- * Allows users to personalize their trading behavior by setting preferences
- * These preferences adjust position sizing weights (Agent HOW layer)
- */
-
 import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { X, Activity } from 'lucide-react';
 import { Slider, SliderRange, SliderThumb, SliderTrack } from '@radix-ui/react-slider';
 import { theme, fonts } from '../ostium/theme';
+import { apiGet, apiPost } from '@/app/lib/api';
 
 export interface TradingPreferences {
   risk_tolerance: number;
@@ -79,17 +73,16 @@ export function TradingPreferencesForm({
 
   const loadPreferences = async () => {
     try {
-      const response = await fetch(`https://7dfbd74471e1.ngrok-free.app/api/user/trading-preferences?wallet=${userWallet}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.preferences) {
+      const response = await apiGet(`/api/user/trading-preferences?wallet=${userWallet}`);
+      if (response.success) {
+        if (response.preferences) {
           // Ensure all values default to 50 if missing
           setPreferences({
-            risk_tolerance: data.preferences.risk_tolerance ?? 50,
-            trade_frequency: data.preferences.trade_frequency ?? 50,
-            social_sentiment_weight: data.preferences.social_sentiment_weight ?? 50,
-            price_momentum_focus: data.preferences.price_momentum_focus ?? 50,
-            market_rank_priority: data.preferences.market_rank_priority ?? 50,
+            risk_tolerance: response.preferences.risk_tolerance ?? 50,
+            trade_frequency: response.preferences.trade_frequency ?? 50,
+            social_sentiment_weight: response.preferences.social_sentiment_weight ?? 50,
+            price_momentum_focus: response.preferences.price_momentum_focus ?? 50,
+            market_rank_priority: response.preferences.market_rank_priority ?? 50,
           });
         }
       }
@@ -107,7 +100,7 @@ export function TradingPreferencesForm({
     }
 
     // Small delay to ensure blur event completes
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // await new Promise(resolve => setTimeout(resolve, 50));
 
     setSaving(true);
     setError('');
@@ -128,13 +121,9 @@ export function TradingPreferencesForm({
       }
 
       // Otherwise, save to API as usual
-      const response = await fetch('https://92742ee4d26b.ngrok-free.app/api/user/trading-preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userWallet,
-          preferences,
-        }),
+      const response = await apiPost('/api/user/trading-preferences', {
+        userWallet,
+        preferences,
       });
 
       if (!response.ok) {
@@ -261,7 +250,7 @@ export function TradingPreferencesForm({
 
     return (
       <div
-        ref={sliderRowRef}
+        // ref={sliderRowRef}
         className="border p-5 space-y-4 rounded-lg"
         style={{
           borderColor: theme.primaryBorder,
@@ -293,14 +282,8 @@ export function TradingPreferencesForm({
               inputMode="numeric"
               value={inputValue}
               onChange={handleInputChange}
-              onFocus={(e) => {
-                handleInputFocus(e);
-                e.currentTarget.style.borderColor = theme.primary;
-              }}
-              onBlur={(e) => {
-                handleInputBlur();
-                e.currentTarget.style.borderColor = theme.primaryBorder;
-              }}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleInputBlur();
@@ -313,14 +296,6 @@ export function TradingPreferencesForm({
                 background: theme.bg,
                 color: theme.primary,
                 fontFamily: fonts.body,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = theme.primary;
-              }}
-              onMouseLeave={(e) => {
-                if (document.activeElement !== e.currentTarget) {
-                  e.currentTarget.style.borderColor = theme.primaryBorder;
-                }
               }}
               placeholder="0-100"
             />
@@ -348,7 +323,6 @@ export function TradingPreferencesForm({
               const v = Math.min(100, Math.max(0, vals[0]));
               const rounded = Math.round(v);
 
-              // Preserve scroll position when committing slider value
               const container = scrollContainerRef.current;
               const scrollPosition = container?.scrollTop ?? 0;
 
@@ -356,7 +330,6 @@ export function TradingPreferencesForm({
               setTempValue(rounded);
               setIsDragging(false);
 
-              // Restore scroll position after state update
               requestAnimationFrame(() => {
                 if (container) {
                   container.scrollTop = scrollPosition;
@@ -691,4 +664,3 @@ export function TradingPreferencesModal(props: TradingPreferencesModalProps) {
     </div>
   );
 }
-
