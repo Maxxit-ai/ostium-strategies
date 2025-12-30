@@ -5,23 +5,27 @@
 
 // Backend API base URL - update this when deploying
 // IMPORTANT: Use www.maxxit.ai to avoid CORS preflight redirect issues
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.maxxit.ai';
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://www.maxxit.ai";
 
 /**
  * Default headers for API requests
  * Includes ngrok-skip-browser-warning to bypass ngrok interstitial page
  */
 const defaultHeaders: HeadersInit = {
-  'Content-Type': 'application/json',
-  'ngrok-skip-browser-warning': 'true',
+  "Content-Type": "application/json",
+  "ngrok-skip-browser-warning": "true",
 };
 
 /**
  * Make a GET request to the API
  */
-export async function apiGet<T = any>(endpoint: string, params?: Record<string, string>): Promise<T> {
+export async function apiGet<T = any>(
+  endpoint: string,
+  params?: Record<string, string>
+): Promise<T> {
   const url = new URL(endpoint, API_BASE_URL);
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -31,13 +35,15 @@ export async function apiGet<T = any>(endpoint: string, params?: Record<string, 
   }
 
   const response = await fetch(url.toString(), {
-    method: 'GET',
+    method: "GET",
     headers: defaultHeaders,
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || error.message || 'Request failed');
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Request failed" }));
+    throw new Error(error.error || error.message || "Request failed");
   }
 
   return response.json();
@@ -46,18 +52,23 @@ export async function apiGet<T = any>(endpoint: string, params?: Record<string, 
 /**
  * Make a POST request to the API
  */
-export async function apiPost<T = any>(endpoint: string, body?: any): Promise<T> {
+export async function apiPost<T = any>(
+  endpoint: string,
+  body?: any
+): Promise<T> {
   const url = new URL(endpoint, API_BASE_URL);
 
   const response = await fetch(url.toString(), {
-    method: 'POST',
+    method: "POST",
     headers: defaultHeaders,
     body: body ? JSON.stringify(body) : undefined,
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || error.message || 'Request failed');
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Request failed" }));
+    throw new Error(error.error || error.message || "Request failed");
   }
 
   return response.json();
@@ -67,7 +78,10 @@ export async function apiPost<T = any>(endpoint: string, body?: any): Promise<T>
  * Raw fetch with API base URL and default headers
  * Use when you need more control over the request
  */
-export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+export async function apiFetch(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
   const url = new URL(endpoint, API_BASE_URL);
 
   return fetch(url.toString(), {
@@ -78,6 +92,3 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     },
   });
 }
-
-
-

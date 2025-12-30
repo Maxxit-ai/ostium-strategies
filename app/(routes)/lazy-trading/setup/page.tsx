@@ -84,8 +84,8 @@ export default function LazyTradingSetup() {
     setAgentId
   );
 
-  // Ostium hooks
-  const { checkOstiumStatus, enable1ClickTrading } = useOstium(
+  // Ostium hooks - matches reference implementation with separate functions
+  const { checkOstiumStatus, approveDelegation, approveUsdc } = useOstium(
     user?.wallet?.address,
     ostiumAgentAddress,
     setDelegationComplete,
@@ -284,7 +284,8 @@ export default function LazyTradingSetup() {
               loading={loading}
               signingStep={signingStep}
               txHash={txHash}
-              onEnable1ClickTrading={enable1ClickTrading}
+              onApproveDelegation={approveDelegation}
+              onApproveUsdc={approveUsdc}
               onCheckStatus={checkOstiumStatus}
               onContinue={() => setStep("preferences")}
             />

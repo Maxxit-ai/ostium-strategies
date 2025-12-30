@@ -139,6 +139,7 @@ export function useLazyTrading() {
   };
 
   // Auto-proceed when both delegation and allowance are done (on ostium step)
+  // Matches reference implementation: moves to next step when both are complete
   useEffect(() => {
     if (step === "ostium" && delegationComplete && allowanceComplete) {
       setSigningStep("done");

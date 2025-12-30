@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Check, Activity, ExternalLink, Shield, Zap, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { theme, fonts } from "../ostium/theme";
 import { hoverLiftClass } from "../ostium/ui";
@@ -12,7 +13,8 @@ interface OstiumStepProps {
   loading: boolean;
   signingStep: "idle" | "delegation" | "allowance" | "done";
   txHash: string | null;
-  onEnable1ClickTrading: () => void;
+  onApproveDelegation: () => void;
+  onApproveUsdc: () => void;
   onCheckStatus: () => void;
   onContinue?: () => void;
 }
@@ -149,23 +151,29 @@ export function OstiumStep({
   loading,
   signingStep,
   txHash,
-  onEnable1ClickTrading,
+  onApproveDelegation,
+  onApproveUsdc,
   onCheckStatus,
   onContinue,
 }: OstiumStepProps) {
   const isComplete = delegationComplete && allowanceComplete;
+  const [doingBothActions, setDoingBothActions] = useState(false);
 
-  const getButtonText = () => {
-    if (signingStep === "delegation") return "Sign Delegation (1/2)...";
-    if (signingStep === "allowance") return "Sign Allowance (2/2)...";
-    if (loading || signingStep === "idle") return "Processing...";
+  // Auto-trigger allowance after delegation completes when doing both actions
+  useEffect(() => {
+    if (doingBothActions && delegationComplete && !allowanceComplete && !loading && signingStep === "idle") {
+      // Delegation just completed, now trigger allowance
+      setDoingBothActions(false); // Reset flag
+      onApproveUsdc();
+    }
+  }, [doingBothActions, delegationComplete, allowanceComplete, loading, signingStep, onApproveUsdc]);
 
-    // Show specific action when only one step is pending
-    if (!delegationComplete && allowanceComplete) return "Sign Delegation";
-    if (delegationComplete && !allowanceComplete) return "Sign Allowance";
-
-    return "Enable 1-Click Trading";
-  };
+  // Reset flag when both actions are complete
+  useEffect(() => {
+    if (isComplete) {
+      setDoingBothActions(false);
+    }
+  }, [isComplete]);
 
   return (
     <div className="space-y-6">
@@ -300,21 +308,57 @@ export function OstiumStep({
         />
       )}
 
-      {/* Action Button - Show Enable button when not complete and not loading */}
-      {!isComplete && !loading && (
-        <button
-          onClick={onEnable1ClickTrading}
-          disabled={!ostiumAgentAddress || loading || signingStep === "idle"}
-          className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
-          style={{
-            background: theme.primary,
-            color: theme.bg,
-            fontFamily: fonts.heading,
-          }}
-        >
-          <Zap className="w-4 h-4" />
-          {getButtonText()}
-        </button>
+      {/* Enable 1 CT Button - Handles both actions or specific remaining action */}
+      {!isComplete && (
+        <div className="space-y-2">
+          <button
+            onClick={async () => {
+              // If both are incomplete, do delegation first, then allowance will auto-trigger
+              if (!delegationComplete && !allowanceComplete) {
+                setDoingBothActions(true);
+                await onApproveDelegation();
+              } else if (!delegationComplete) {
+                // Only delegation needed
+                await onApproveDelegation();
+              } else if (!allowanceComplete) {
+                // Only allowance needed
+                await onApproveUsdc();
+              }
+            }}
+            disabled={loading || !ostiumAgentAddress}
+            className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
+            style={{
+              background: theme.primary,
+              color: theme.bg,
+              fontFamily: fonts.heading,
+            }}
+          >
+            {loading ? (
+              <>
+                <Activity className="w-4 h-4 animate-pulse" />
+                {signingStep === "delegation" ? "SIGNING DELEGATION..." :
+                  signingStep === "allowance" ? "SIGNING ALLOWANCE..." :
+                    "PROCESSING..."}
+              </>
+            ) : (
+              !delegationComplete && !allowanceComplete
+                ? "ENABLE 1 CT"
+                : !delegationComplete
+                  ? "APPROVE DELEGATION"
+                  : "APPROVE USDC"
+            )}
+          </button>
+          {ostiumAgentAddress && (
+            <button
+              onClick={onCheckStatus}
+              disabled={loading}
+              className="w-full py-2 text-xs cursor-pointer"
+              style={{ color: theme.textMuted, fontFamily: fonts.body }}
+            >
+              Refresh Status
+            </button>
+          )}
+        </div>
       )}
 
       {/* Continue Button - Show when complete */}
@@ -334,17 +378,6 @@ export function OstiumStep({
         </button>
       )}
 
-      {/* Refresh Status */}
-      {ostiumAgentAddress && !isComplete && (
-        <button
-          onClick={onCheckStatus}
-          disabled={loading}
-          className="w-full py-2 text-xs cursor-pointer"
-          style={{ color: theme.textMuted, fontFamily: fonts.body }}
-        >
-          Already enabled? Refresh Status
-        </button>
-      )}
 
       {/* Transaction Hash */}
       {txHash && (
