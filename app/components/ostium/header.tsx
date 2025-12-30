@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { Bell, Plus, ChevronDown, Wallet, LogOut } from "lucide-react";
+import { Bell, Plus, ChevronDown, Wallet, LogOut, Menu, X } from "lucide-react";
 import { fonts, theme } from "./theme";
 import { hoverLiftClass } from "./ui";
 import Image from "next/image";
@@ -51,12 +51,14 @@ function NavDropdown({
   onClose,
   onMouseEnter,
   onMouseLeave,
+  isMobile = false,
 }: {
   items: Array<{ label: string; href: string; icon?: any; description?: string }>;
   isOpen: boolean;
   onClose: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  isMobile?: boolean;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -78,7 +80,7 @@ function NavDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-2xl border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200"
+      className={`${isMobile ? 'relative w-full' : 'absolute top-full left-0 mt-1 w-52'} rounded-xl shadow-2xl border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200`}
       style={{
         background: theme.surface,
         borderColor: theme.stroke,
@@ -94,7 +96,7 @@ function NavDropdown({
               key={idx}
               href={item.href}
               onClick={onClose}
-              className="flex items-start gap-3 px-4 py-3 rounded-lg transition-all group"
+              className="flex items-start gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all group"
               style={{
                 color: theme.text,
                 fontFamily: fonts.body,
@@ -111,7 +113,7 @@ function NavDropdown({
             >
               <div className="flex-1 min-w-0">
                 <div
-                  className="text-sm font-medium group-hover:text-current transition-colors"
+                  className="text-xs sm:text-sm font-medium group-hover:text-current transition-colors"
                   style={{ color: "inherit" }}
                 >
                   {item.label}
@@ -130,11 +132,13 @@ function WalletDropdown({
   onClose,
   walletAddress,
   onDisconnect,
+  isMobile = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
   walletAddress: string;
   onDisconnect: () => void;
+  isMobile?: boolean;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -158,19 +162,19 @@ function WalletDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full right-0 mt-2 w-56 rounded-xl shadow-2xl border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200"
+      className={`${isMobile ? 'relative w-full mt-2' : 'absolute top-full right-0 mt-2 w-56'} rounded-xl shadow-2xl border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200`}
       style={{
         background: theme.surface,
         borderColor: theme.stroke,
         boxShadow: `0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px ${theme.stroke}`,
       }}
     >
-      <div className="p-3">
-        <div className="px-3 py-2 mb-2">
-          <p className="text-xs mb-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+      <div className="p-2 sm:p-3">
+        <div className="px-2 sm:px-3 py-1.5 sm:py-2 mb-2">
+          <p className="text-[10px] sm:text-xs mb-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
             Connected Wallet
           </p>
-          <p className="text-sm font-mono" style={{ color: theme.text }}>
+          <p className="text-xs sm:text-sm font-mono break-all" style={{ color: theme.text }}>
             {truncatedAddress}
           </p>
         </div>
@@ -183,7 +187,7 @@ function WalletDropdown({
             onDisconnect();
             onClose();
           }}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all text-left"
+          className="flex items-center gap-2 w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all text-left"
           style={{
             color: theme.text,
             fontFamily: fonts.body,
@@ -197,19 +201,38 @@ function WalletDropdown({
             e.currentTarget.style.color = theme.text;
           }}
         >
-          <LogOut className="w-4 h-4" />
-          <span className="text-sm">Disconnect</span>
+          <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Disconnect</span>
         </button>
       </div>
     </div>
   );
 }
 
-export function OstiumHeader({ currentTime }: { currentTime: string }) {
+export function OstiumHeader() {
   const { authenticated, user, login, logout } = usePrivy();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-US", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMouseEnter = (label: string) => {
     if (closeTimeoutRef.current) {
@@ -233,74 +256,338 @@ export function OstiumHeader({ currentTime }: { currentTime: string }) {
     };
   }, []);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
+
   const truncatedAddress = user?.wallet?.address
     ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}`
     : "";
 
   return (
-    <header
-      className="sticky top-0 z-50 border-b backdrop-blur-xl"
-      style={{ background: `${theme.bg}F8`, borderColor: theme.stroke }}
-    >
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Image src="/ostium-logo.png" alt="Ostium" width={110} height={110} />
-            </Link>
-            <nav className="hidden lg:flex items-center gap-1 relative">
-              {navItems.map((item) => (
-                <div key={item.label} className="relative">
-                  {item.hasDropdown ? (
-                    <div
-                      className="relative"
-                      onMouseEnter={() => handleMouseEnter(item.label)}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      <button
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${hoverLiftClass}`}
+    <>
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden transition-opacity"
+          style={{
+            background: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <header
+        className="sticky top-0 z-50 border-b backdrop-blur-xl"
+        style={{ background: `${theme.bg}F8`, borderColor: theme.stroke }}
+      >
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center gap-3 sm:gap-6 md:gap-8">
+              <Link href="/" className="flex items-center gap-2 sm:gap-2.5">
+                <Image
+                  src="/ostium-logo.png"
+                  alt="Ostium"
+                  width={110}
+                  height={110}
+                />
+              </Link>
+              <nav className="hidden lg:flex items-center gap-1 relative">
+                {navItems.map((item) => (
+                  <div key={item.label} className="relative">
+                    {item.hasDropdown ? (
+                      <div
+                        className="relative"
+                        onMouseEnter={() => handleMouseEnter(item.label)}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <button
+                          className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${hoverLiftClass}`}
+                          style={{
+                            color:
+                              openDropdown === item.label ? theme.primary : theme.textMuted,
+                            fontFamily: fonts.body,
+                            background:
+                              openDropdown === item.label ? theme.primarySoft : "transparent",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {item.label}
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${openDropdown === item.label ? "rotate-180" : ""
+                              }`}
+                          />
+                        </button>
+                        {item.dropdownItems && (
+                          <NavDropdown
+                            items={item.dropdownItems}
+                            isOpen={openDropdown === item.label}
+                            onClose={() => setOpenDropdown(null)}
+                            onMouseEnter={() => handleMouseEnter(item.label)}
+                            onMouseLeave={handleMouseLeave}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${hoverLiftClass}`}
                         style={{
-                          color:
-                            openDropdown === item.label ? theme.primary : theme.textMuted,
+                          color: theme.textMuted,
                           fontFamily: fonts.body,
-                          background:
-                            openDropdown === item.label ? theme.primarySoft : "transparent",
+                          background: "transparent",
                           cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = theme.primary;
+                          e.currentTarget.style.background = theme.primarySoft;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = theme.textMuted;
+                          e.currentTarget.style.background = "transparent";
                         }}
                       >
                         {item.label}
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </nav>
+
+
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+              <div
+                className="hidden md:flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-mono px-2 sm:px-3 py-0.5 sm:py-1 rounded-md"
+                style={{
+                  color: theme.textMuted,
+                  background: theme.accentSubtle,
+                  border: `1px solid ${theme.stroke}`,
+                }}
+              >
+                <div
+                  className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse"
+                  style={{ background: theme.success }}
+                />
+                {currentTime}
+              </div>
+
+              {/* Wallet Connect Button */}
+              {authenticated && user?.wallet?.address ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setWalletDropdownOpen(!walletDropdownOpen)}
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium border ${hoverLiftClass}`}
+                    style={{
+                      borderColor: walletDropdownOpen ? theme.primary : theme.stroke,
+                      background: walletDropdownOpen ? theme.primarySoft : "transparent",
+                      color: theme.text,
+                      fontFamily: fonts.body,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.primary }} />
+                    <span className="hidden sm:inline">{truncatedAddress}</span>
+                    <span className="sm:hidden">{truncatedAddress.slice(0, 4)}...</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${walletDropdownOpen ? "rotate-180" : ""}`}
+                      style={{ color: theme.textMuted }}
+                    />
+                  </button>
+                  <WalletDropdown
+                    isOpen={walletDropdownOpen}
+                    onClose={() => setWalletDropdownOpen(false)}
+                    walletAddress={user.wallet.address}
+                    onDisconnect={logout}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => login()}
+                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg ${hoverLiftClass}`}
+                  style={{
+                    background: theme.primary,
+                    color: "#0B0603",
+                    fontFamily: fonts.heading,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Connect Wallet</span>
+                  <span className="sm:hidden">Connect</span>
+                </button>
+              )}
+
+              <button
+                className={`hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg ${hoverLiftClass}`}
+                style={{
+                  background: theme.primary,
+                  color: "#0B0603",
+                  fontFamily: fonts.heading,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Add
+              </button>
+              <div
+                className={`hidden md:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg ${hoverLiftClass}`}
+                style={{
+                  background: theme.surfaceAlt,
+                  border: `1px solid ${theme.stroke}`,
+                  cursor: "pointer",
+                }}
+              >
+                <span
+                  className="text-xs sm:text-sm font-semibold tabular-nums"
+                  style={{ color: theme.text, fontFamily: fonts.heading }}
+                >
+                  7,807.02
+                </span>
+                <div
+                  className="w-4 h-4 sm:w-5 sm:h-5 rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}, #FFC371)`,
+                  }}
+                />
+              </div>
+              <button
+                className={`p-1.5 hidden md:block sm:p-2 rounded-lg ${hoverLiftClass}`}
+                style={{ color: theme.textMuted, cursor: "pointer" }}
+              >
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 rounded-lg transition-all"
+                style={{
+                  color: theme.textMuted,
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.primarySoft;
+                  e.currentTarget.style.color = theme.primary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = theme.textMuted;
+                }}
+              >
+                {mobileMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+
+            </div>
+
+
+          </div>
+
+        </div>
+      </header>
+
+      {/* Mobile Menu Side Panel */}
+      <div
+        className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        style={{
+          background: theme.bg,
+          borderLeft: `1px solid ${theme.stroke}`,
+          boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.3)',
+        }}
+      >
+        <div className="flex flex-col h-full">
+          {/* Mobile Menu Header */}
+          <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: theme.stroke }}>
+            <h2 className="text-lg font-bold" style={{ color: theme.text, fontFamily: fonts.heading }}>
+              Menu
+            </h2>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 rounded-lg transition-all"
+              style={{
+                color: theme.textMuted,
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.primarySoft;
+                e.currentTarget.style.color = theme.primary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = theme.textMuted;
+              }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Mobile Menu Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Navigation Items */}
+            <nav className="py-4 space-y-1">
+              {navItems.map((item) => (
+                <div key={item.label} className="px-4">
+                  {item.hasDropdown ? (
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          // Toggle dropdown - close if already open, open if closed
+                          setMobileDropdownOpen(mobileDropdownOpen === item.label ? null : item.label);
+                        }}
+                        className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+                        style={{
+                          color: mobileDropdownOpen === item.label ? theme.primary : theme.text,
+                          background: mobileDropdownOpen === item.label ? theme.primarySoft : "transparent",
+                          fontFamily: fonts.body,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span>{item.label}</span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${openDropdown === item.label ? "rotate-180" : ""
-                            }`}
+                          className={`w-4 h-4 transition-transform ${mobileDropdownOpen === item.label ? "rotate-180" : ""}`}
                         />
                       </button>
                       {item.dropdownItems && (
                         <NavDropdown
                           items={item.dropdownItems}
-                          isOpen={openDropdown === item.label}
-                          onClose={() => setOpenDropdown(null)}
-                          onMouseEnter={() => handleMouseEnter(item.label)}
-                          onMouseLeave={handleMouseLeave}
+                          isOpen={mobileDropdownOpen === item.label}
+                          onClose={() => setMobileDropdownOpen(null)}
+                          isMobile={true}
                         />
                       )}
                     </div>
                   ) : (
                     <Link
                       href={item.href}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${hoverLiftClass}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
                       style={{
-                        color: theme.textMuted,
+                        color: theme.text,
                         fontFamily: fonts.body,
-                        background: "transparent",
                         cursor: "pointer",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = theme.primary;
                         e.currentTarget.style.background = theme.primarySoft;
+                        e.currentTarget.style.color = theme.primary;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = theme.textMuted;
                         e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = theme.text;
                       }}
                     >
                       {item.label}
@@ -309,56 +596,83 @@ export function OstiumHeader({ currentTime }: { currentTime: string }) {
                 </div>
               ))}
             </nav>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <div
-              className="hidden md:flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-md"
-              style={{
-                color: theme.textMuted,
-                background: theme.accentSubtle,
-                border: `1px solid ${theme.stroke}`,
-              }}
-            >
+            {/* Right Side Panel Content */}
+            <div className="px-4 py-4 space-y-4 border-t" style={{ borderColor: theme.stroke }}>
+              {/* Time Display */}
               <div
-                className="w-2 h-2 rounded-full animate-pulse"
-                style={{ background: theme.success }}
-              />
-              {currentTime}
-            </div>
+                className="flex items-center gap-2 text-xs font-mono px-3 py-2 rounded-md"
+                style={{
+                  color: theme.textMuted,
+                  background: theme.accentSubtle,
+                  border: `1px solid ${theme.stroke}`,
+                }}
+              >
+                <div
+                  className="w-2 h-2 rounded-full animate-pulse"
+                  style={{ background: theme.success }}
+                />
+                {currentTime}
+              </div>
 
-            {/* Wallet Connect Button */}
-            {authenticated && user?.wallet?.address ? (
-              <div className="relative">
+              {/* Wallet Section */}
+              {authenticated && user?.wallet?.address ? (
+                <div className="space-y-2">
+                  <div className="px-3 py-2 rounded-lg" style={{ background: theme.surfaceAlt }}>
+                    <p className="text-xs mb-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+                      Connected Wallet
+                    </p>
+                    <p className="text-sm font-mono break-all" style={{ color: theme.text }}>
+                      {truncatedAddress}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all text-left"
+                    style={{
+                      color: theme.text,
+                      fontFamily: fonts.body,
+                      background: theme.surfaceAlt,
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = theme.primarySoft;
+                      e.currentTarget.style.color = theme.primary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = theme.surfaceAlt;
+                      e.currentTarget.style.color = theme.text;
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm">Disconnect</span>
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={() => setWalletDropdownOpen(!walletDropdownOpen)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border ${hoverLiftClass}`}
+                  onClick={() => {
+                    login();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg transition-all"
                   style={{
-                    borderColor: walletDropdownOpen ? theme.primary : theme.stroke,
-                    background: walletDropdownOpen ? theme.primarySoft : "transparent",
-                    color: theme.text,
-                    fontFamily: fonts.body,
+                    background: theme.primary,
+                    color: "#0B0603",
+                    fontFamily: fonts.heading,
                     cursor: "pointer",
                   }}
                 >
-                  <Wallet className="w-4 h-4" style={{ color: theme.primary }} />
-                  {truncatedAddress}
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${walletDropdownOpen ? "rotate-180" : ""}`}
-                    style={{ color: theme.textMuted }}
-                  />
+                  <Wallet className="w-4 h-4" />
+                  Connect Wallet
                 </button>
-                <WalletDropdown
-                  isOpen={walletDropdownOpen}
-                  onClose={() => setWalletDropdownOpen(false)}
-                  walletAddress={user.wallet.address}
-                  onDisconnect={logout}
-                />
-              </div>
-            ) : (
+              )}
+
+              {/* Add Button */}
               <button
-                onClick={() => login()}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg ${hoverLiftClass}`}
+                className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg transition-all"
                 style={{
                   background: theme.primary,
                   color: "#0B0603",
@@ -366,74 +680,83 @@ export function OstiumHeader({ currentTime }: { currentTime: string }) {
                   cursor: "pointer",
                 }}
               >
-                <Wallet className="w-4 h-4" />
-                Connect Wallet
+                <Plus className="w-4 h-4" />
+                Add
               </button>
-            )}
 
-            <button
-              className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg ${hoverLiftClass}`}
-              style={{
-                background: theme.primary,
-                color: "#0B0603",
-                fontFamily: fonts.heading,
-                cursor: "pointer",
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </button>
-            <div
-              className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg ${hoverLiftClass}`}
-              style={{
-                background: theme.surfaceAlt,
-                border: `1px solid ${theme.stroke}`,
-                cursor: "pointer",
-              }}
-            >
-              <span
-                className="text-sm font-semibold tabular-nums"
-                style={{ color: theme.text, fontFamily: fonts.heading }}
-              >
-                7,807.02
-              </span>
+              {/* Balance Display */}
               <div
-                className="w-5 h-5 rounded-full"
+                className="flex items-center justify-between px-3 py-2 rounded-lg"
                 style={{
-                  background: `linear-gradient(135deg, ${theme.primary}, #FFC371)`,
+                  background: theme.surfaceAlt,
+                  border: `1px solid ${theme.stroke}`,
                 }}
-              />
+              >
+                <span
+                  className="text-sm font-semibold tabular-nums"
+                  style={{ color: theme.text, fontFamily: fonts.heading }}
+                >
+                  7,807.02
+                </span>
+                <div
+                  className="w-5 h-5 rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}, #FFC371)`,
+                  }}
+                />
+              </div>
+
+              {/* Notifications */}
+              <button
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all text-left"
+                style={{
+                  color: theme.text,
+                  fontFamily: fonts.body,
+                  background: theme.surfaceAlt,
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.primarySoft;
+                  e.currentTarget.style.color = theme.primary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = theme.surfaceAlt;
+                  e.currentTarget.style.color = theme.text;
+                }}
+              >
+                <Bell className="w-4 h-4" />
+                <span className="text-sm">Notifications</span>
+              </button>
             </div>
-            <button
-              className={`p-2 rounded-lg ${hoverLiftClass}`}
-              style={{ color: theme.textMuted, cursor: "pointer" }}
-            >
-              <Bell className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>
-    </header>
+    </>
   );
 }
 
 export function OstiumFooter() {
   return (
     <footer
-      className="py-8 border-t"
+      className="py-6 sm:py-8 border-t"
       style={{ borderColor: theme.stroke, background: theme.surfaceAlt }}
     >
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/ostium-logo.png" alt="Ostium" width={110} height={110} />
+          <Image
+            src="/ostium-logo.png"
+            alt="Ostium"
+            width={110}
+            height={110}
+          />
         </Link>
         <p
-          className="text-xs text-center"
+          className="text-[10px] sm:text-xs text-center px-2"
           style={{ color: theme.textMuted, fontFamily: fonts.body }}
         >
           Trading involves risk. Past performance is not indicative of future results.
         </p>
-        <p className="text-xs" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        <p className="text-[10px] sm:text-xs whitespace-nowrap" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
           © 2025
         </p>
       </div>

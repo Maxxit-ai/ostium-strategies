@@ -49,7 +49,7 @@ function LazyTradingContent() {
   // Show setup wizard
   return (
     <div className="min-h-screen" style={{ background: theme.bg }}>
-      <OstiumHeader currentTime={currentTime} />
+      <OstiumHeader />
       <LazyTradingLanding />
       <OstiumFooter />
     </div>
@@ -60,7 +60,7 @@ export default function LazyTrading() {
   return (
     <Suspense fallback={
       <div className="min-h-screen" style={{ background: theme.bg }}>
-        <OstiumHeader currentTime="" />
+        <OstiumHeader />
         <div className="flex items-center justify-center min-h-screen">
           <p style={{ color: theme.textMuted, fontFamily: fonts.body }}>Loading...</p>
         </div>

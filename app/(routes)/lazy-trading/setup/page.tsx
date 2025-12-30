@@ -203,33 +203,33 @@ export default function LazyTradingSetup() {
 
   return (
     <div className="min-h-screen" style={{ background: theme.bg }}>
-      <OstiumHeader currentTime={currentTime} />
+      <OstiumHeader />
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {/* Title */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <div
-            className="inline-flex items-center gap-2 px-4 py-2 border mb-4"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 border mb-3 sm:mb-4"
             style={{
               borderColor: theme.primary,
               background: theme.primarySoft,
             }}
           >
-            <Zap className="w-4 h-4" style={{ color: theme.primary }} />
+            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.primary }} />
             <span
-              className="text-sm font-bold"
+              className="text-xs sm:text-sm font-bold"
               style={{ color: theme.primary, fontFamily: fonts.heading }}
             >
               LAZY TRADING
             </span>
           </div>
           <h1
-            className="text-4xl md:text-5xl mb-4"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4"
             style={{ color: theme.text, fontFamily: fonts.heading }}
           >
             QUICK SETUP
           </h1>
-          <p style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+          <p className="text-sm sm:text-base px-2" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
             Connect, configure, and start trading in minutes
           </p>
         </div>
@@ -240,14 +240,14 @@ export default function LazyTradingSetup() {
         {/* Error Display */}
         {error && (
           <div
-            className="mb-6 p-4 border flex items-start gap-3"
+            className="mb-4 sm:mb-6 p-3 sm:p-4 border flex items-start gap-2 sm:gap-3"
             style={{
               borderColor: theme.primary,
               background: theme.primarySoft,
             }}
           >
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: theme.primary }} />
-            <p className="text-sm" style={{ color: theme.primary, fontFamily: fonts.body }}>
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5" style={{ color: theme.primary }} />
+            <p className="text-xs sm:text-sm" style={{ color: theme.primary, fontFamily: fonts.body }}>
               {error}
             </p>
           </div>
@@ -255,7 +255,7 @@ export default function LazyTradingSetup() {
 
         {/* Step Content */}
         <div
-          className="border p-8"
+          className="border p-4 sm:p-6 md:p-8"
           style={{
             borderColor: theme.stroke,
             background: theme.surface,
@@ -294,14 +294,14 @@ export default function LazyTradingSetup() {
           {/* Step 3: Trading Preferences */}
           {step === "preferences" && (
             <div className="space-y-4">
-              <div className="text-center mb-6">
+              <div className="text-center mb-4 sm:mb-6">
                 <h2
-                  className="text-2xl mb-2"
+                  className="text-xl sm:text-2xl mb-2"
                   style={{ color: theme.text, fontFamily: fonts.heading }}
                 >
                   TRADING PREFERENCES
                 </h2>
-                <p style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+                <p className="text-sm sm:text-base" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
                   Configure how your agent should trade
                 </p>
               </div>
@@ -347,7 +347,7 @@ export default function LazyTradingSetup() {
               onCopyAddress={handleCopyAddress}
               onEthAmountChange={setEthAmount}
               onSendETH={() => handleSendETH(ethAmount)}
-              onViewDeployments={() => router.push("/my-deployments")}
+              onViewDeployments={() => router.push("https://www.maxxit.ai/my-deployments")}
               onBackToHome={() => router.push("/")}
             />
           )}

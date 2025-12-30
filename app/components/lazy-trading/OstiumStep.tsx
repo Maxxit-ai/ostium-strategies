@@ -73,31 +73,31 @@ function LoadingStepIndicator({
 
   return (
     <div
-      className="p-4 rounded-lg space-y-3"
+      className="p-3 sm:p-4 rounded-lg space-y-2 sm:space-y-3"
       style={{
         background: theme.primarySoft,
         border: `1px solid ${theme.primaryBorder}`,
       }}
     >
       {/* Progress indicator */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center"
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
           style={{
             background: theme.primary,
           }}
         >
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: theme.bg }} />
+          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" style={{ color: theme.bg }} />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p
-            className="text-sm font-semibold"
+            className="text-xs sm:text-sm font-semibold"
             style={{ color: theme.primary, fontFamily: fonts.heading }}
           >
             {stepInfo.title}
           </p>
           <p
-            className="text-xs"
+            className="text-[10px] sm:text-xs"
             style={{ color: theme.textMuted, fontFamily: fonts.body }}
           >
             {stepInfo.description}
@@ -105,7 +105,7 @@ function LoadingStepIndicator({
         </div>
         {stepInfo.step > 0 && (
           <span
-            className="text-xs font-bold px-2 py-1 rounded"
+            className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-1 rounded shrink-0"
             style={{
               background: theme.surface,
               color: theme.primary,
@@ -158,6 +158,17 @@ export function OstiumStep({
 }: OstiumStepProps) {
   const isComplete = delegationComplete && allowanceComplete;
   const [doingBothActions, setDoingBothActions] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+
+  // Handle status check with loading state
+  const handleCheckStatus = async () => {
+    setCheckingStatus(true);
+    try {
+      await onCheckStatus();
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   // Auto-trigger allowance after delegation completes when doing both actions
   useEffect(() => {
@@ -176,30 +187,30 @@ export function OstiumStep({
   }, [isComplete]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center px-2">
         <div
-          className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-4"
+          className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-xl flex items-center justify-center mb-3 sm:mb-4"
           style={{
             background: isComplete ? theme.successSoft : theme.primarySoft,
             border: `1px solid ${isComplete ? theme.success : theme.primaryBorder}`,
           }}
         >
           {isComplete ? (
-            <Check className="w-6 h-6" style={{ color: theme.success }} />
+            <Check className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: theme.success }} />
           ) : (
-            <Shield className="w-6 h-6" style={{ color: theme.primary }} />
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: theme.primary }} />
           )}
         </div>
 
         <h2
-          className="text-xl font-semibold mb-2"
+          className="text-lg sm:text-xl font-semibold mb-2"
           style={{ color: theme.text, fontFamily: fonts.heading }}
         >
           {isComplete ? "1-Click Trading Enabled" : "Enable 1-Click Trading"}
         </h2>
-        <p className="text-sm" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        <p className="text-xs sm:text-sm px-2" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
           {isComplete
             ? "You're all set for gasless transactions."
             : "Enable gasless transactions and 1-click trading on Ostium."}
@@ -208,50 +219,50 @@ export function OstiumStep({
 
       {/* Steps Card */}
       <div
-        className="p-4 rounded-lg"
+        className="p-3 sm:p-4 rounded-lg"
         style={{
           background: theme.surfaceAlt,
           border: `1px solid ${theme.stroke}`,
         }}
       >
         <p
-          className="text-xs font-medium uppercase tracking-wide mb-4"
+          className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-3 sm:mb-4"
           style={{ color: theme.textMuted, fontFamily: fonts.body }}
         >
           Required Steps
         </p>
 
         {/* Step 1: Delegation */}
-        <div className="flex items-start gap-3 mb-4">
+        <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0"
             style={{
               background: delegationComplete ? theme.primary : theme.surface,
               border: `1px solid ${delegationComplete ? theme.primary : theme.stroke}`,
             }}
           >
             {delegationComplete ? (
-              <Check className="w-4 h-4" style={{ color: theme.bg }} />
+              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.bg }} />
             ) : signingStep === "delegation" ? (
-              <Activity className="w-4 h-4" style={{ color: theme.primary }} />
+              <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.primary }} />
             ) : (
-              <Shield className="w-4 h-4" style={{ color: theme.textMuted }} />
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.textMuted }} />
             )}
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p
-              className="text-sm font-medium"
+              className="text-xs sm:text-sm font-medium"
               style={{ color: delegationComplete ? theme.primary : theme.text, fontFamily: fonts.heading }}
             >
               Enable Account Delegation
             </p>
-            <p className="text-xs mt-0.5" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+            <p className="text-[10px] sm:text-xs mt-0.5" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
               Delegate signatures to a smart wallet.
             </p>
           </div>
           {delegationComplete && (
             <span
-              className="text-xs px-2 py-0.5 rounded"
+              className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded shrink-0"
               style={{ background: theme.successSoft, color: theme.success }}
             >
               Done
@@ -260,36 +271,36 @@ export function OstiumStep({
         </div>
 
         {/* Step 2: Allowance */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2 sm:gap-3">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0"
             style={{
               background: allowanceComplete ? theme.primary : theme.surface,
               border: `1px solid ${allowanceComplete ? theme.primary : theme.stroke}`,
             }}
           >
             {allowanceComplete ? (
-              <Check className="w-4 h-4" style={{ color: theme.bg }} />
+              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.bg }} />
             ) : signingStep === "allowance" ? (
-              <Activity className="w-4 h-4" style={{ color: theme.primary }} />
+              <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.primary }} />
             ) : (
-              <Sparkles className="w-4 h-4" style={{ color: theme.textMuted }} />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: theme.textMuted }} />
             )}
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p
-              className="text-sm font-medium"
+              className="text-xs sm:text-sm font-medium"
               style={{ color: allowanceComplete ? theme.primary : theme.text, fontFamily: fonts.heading }}
             >
               Set USDC Allowance
             </p>
-            <p className="text-xs mt-0.5" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+            <p className="text-[10px] sm:text-xs mt-0.5" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
               Set maximum allowance for trades.
             </p>
           </div>
           {allowanceComplete && (
             <span
-              className="text-xs px-2 py-0.5 rounded"
+              className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded shrink-0"
               style={{ background: theme.successSoft, color: theme.success }}
             >
               Done
@@ -325,8 +336,8 @@ export function OstiumStep({
                 await onApproveUsdc();
               }
             }}
-            disabled={loading || !ostiumAgentAddress}
-            className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
+            disabled={loading || checkingStatus || !ostiumAgentAddress}
+            className={`w-full py-2.5 sm:py-3 cursor-pointer rounded-lg text-sm sm:text-base font-medium flex items-center justify-center gap-2 disabled:opacity-50 ${hoverLiftClass}`}
             style={{
               background: theme.primary,
               color: theme.bg,
@@ -336,9 +347,11 @@ export function OstiumStep({
             {loading ? (
               <>
                 <Activity className="w-4 h-4 animate-pulse" />
-                {signingStep === "delegation" ? "SIGNING DELEGATION..." :
-                  signingStep === "allowance" ? "SIGNING ALLOWANCE..." :
-                    "PROCESSING..."}
+                <span className="text-xs sm:text-sm">
+                  {signingStep === "delegation" ? "SIGNING DELEGATION..." :
+                    signingStep === "allowance" ? "SIGNING ALLOWANCE..." :
+                      "PROCESSING..."}
+                </span>
               </>
             ) : (
               !delegationComplete && !allowanceComplete
@@ -350,12 +363,19 @@ export function OstiumStep({
           </button>
           {ostiumAgentAddress && (
             <button
-              onClick={onCheckStatus}
-              disabled={loading}
-              className="w-full py-2 text-xs cursor-pointer"
+              onClick={handleCheckStatus}
+              disabled={loading || checkingStatus}
+              className="w-full py-2 text-[10px] sm:text-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ color: theme.textMuted, fontFamily: fonts.body }}
             >
-              Refresh Status
+              {checkingStatus ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Checking Status...
+                </>
+              ) : (
+                "Refresh Status"
+              )}
             </button>
           )}
         </div>
@@ -365,7 +385,7 @@ export function OstiumStep({
       {isComplete && onContinue && (
         <button
           onClick={onContinue}
-          className={`w-full py-3 cursor-pointer rounded-lg font-medium flex items-center justify-center gap-2 ${hoverLiftClass}`}
+          className={`w-full py-2.5 sm:py-3 cursor-pointer rounded-lg text-sm sm:text-base font-medium flex items-center justify-center gap-2 ${hoverLiftClass}`}
           style={{
             background: theme.success,
             color: theme.bg,
@@ -373,7 +393,8 @@ export function OstiumStep({
           }}
         >
           <Check className="w-4 h-4" />
-          Continue to Next Step
+          <span className="hidden sm:inline">Continue to Next Step</span>
+          <span className="sm:hidden">Continue</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       )}
@@ -382,39 +403,39 @@ export function OstiumStep({
       {/* Transaction Hash */}
       {txHash && (
         <div
-          className="p-3 rounded-lg"
+          className="p-2.5 sm:p-3 rounded-lg"
           style={{
             background: theme.primarySoft,
             border: `1px solid ${theme.primaryBorder}`,
           }}
         >
-          <p className="text-sm mb-1" style={{ color: theme.primary, fontFamily: fonts.heading }}>
+          <p className="text-xs sm:text-sm mb-1" style={{ color: theme.primary, fontFamily: fonts.heading }}>
             Transaction Submitted
           </p>
           <a
             href={`${blockExplorerUrl}/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs flex items-center gap-1"
+            className="text-[10px] sm:text-xs flex items-center gap-1 break-all"
             style={{ color: theme.textMuted, fontFamily: fonts.body }}
           >
-            View on Explorer <ExternalLink className="w-3 h-3" />
+            View on Explorer <ExternalLink className="w-3 h-3 shrink-0" />
           </a>
         </div>
       )}
 
       {/* Security Info */}
       <div
-        className="p-4 rounded-lg"
+        className="p-3 sm:p-4 rounded-lg"
         style={{
           background: theme.surface,
           border: `1px solid ${theme.stroke}`,
         }}
       >
-        <div className="flex items-start gap-3">
-          <Shield className="w-4 h-4 shrink-0 mt-0.5" style={{ color: theme.success }} />
-          <div>
-            <p className="text-sm font-medium mb-1" style={{ color: theme.text, fontFamily: fonts.heading }}>
+        <div className="flex items-start gap-2 sm:gap-3">
+          <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 mt-0.5" style={{ color: theme.success }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: theme.text, fontFamily: fonts.heading }}>
               Security
             </p>
             <ul className="space-y-1">
@@ -425,11 +446,11 @@ export function OstiumStep({
               ].map((item, i) => (
                 <li
                   key={i}
-                  className="text-xs flex items-center gap-2"
+                  className="text-[10px] sm:text-xs flex items-start gap-2"
                   style={{ color: theme.textMuted, fontFamily: fonts.body }}
                 >
-                  <span style={{ color: theme.success }}>•</span>
-                  {item}
+                  <span className="shrink-0 mt-0.5" style={{ color: theme.success }}>•</span>
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>

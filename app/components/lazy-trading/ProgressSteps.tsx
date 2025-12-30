@@ -79,7 +79,7 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
               {/* Connector Line */}
               {index < steps.length - 1 && (
                 <div
-                  className="flex-1 h-0.5 mx-2 sm:mx-4 mb-5"
+                  className={`flex-1 h-0.5 mx-2 sm:mx-4 sm:mb-5`}
                   style={{
                     background:
                       index < currentStepIndex ? theme.primary : theme.stroke,

@@ -103,17 +103,10 @@ export function useLazyTrading() {
           setAllowanceComplete(true);
         }
 
-        // Map the API step to new step order
-        // API returns: wallet, telegram, preferences, ostium, complete
-        // New order: wallet, ostium, preferences, telegram, complete
-        const stepMapping: Record<string, Step> = {
-          wallet: "wallet",
-          telegram: "telegram",
-          preferences: "preferences",
-          ostium: "ostium",
-          complete: "complete",
-        };
-        setStep(stepMapping[data.step] || "wallet");
+        // Backend reports that a lazy trading setup already exists for this wallet.
+        // Treat this as a fully completed flow and jump straight to the final step.
+        // (We still hydrate local state above so the Complete step has all the data.)
+        setStep("complete");
       } else {
         if (data.hasExistingOstiumAddress && data.ostiumAgentAddress) {
           setOstiumAgentAddress(data.ostiumAgentAddress);

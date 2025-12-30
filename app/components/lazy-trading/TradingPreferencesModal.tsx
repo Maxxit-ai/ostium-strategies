@@ -95,24 +95,24 @@ const SliderRow = memo(function SliderRow({
   return (
     <div
       ref={sliderRowRef}
-      className="border p-5 space-y-4 rounded-lg"
+      className="border p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4 rounded-lg"
       style={{
         borderColor: theme.primaryBorder,
         background: theme.primarySoft,
       }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <h3 className="text-base font-bold" style={{ color: theme.text, fontFamily: fonts.heading }}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm sm:text-base font-bold" style={{ color: theme.text, fontFamily: fonts.heading }}>
             {title}
           </h3>
-          <p className="text-xs mt-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+          <p className="text-[10px] sm:text-xs mt-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
             {helper}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <span
-            className="text-xs font-bold uppercase px-2 py-1 rounded"
+            className="text-[10px] sm:text-xs font-bold uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shrink-0"
             style={{
               color: theme.primary,
               background: theme.primarySoft,
@@ -134,7 +134,7 @@ const SliderRow = memo(function SliderRow({
                 e.currentTarget.blur();
               }
             }}
-            className="w-16 px-2 py-1.5 text-center border-2 font-mono font-bold text-sm rounded focus:outline-none transition-colors"
+            className="w-14 sm:w-16 px-1.5 sm:px-2 py-1 sm:py-1.5 text-center border-2 font-mono font-bold text-xs sm:text-sm rounded focus:outline-none transition-colors"
             style={{
               borderColor: theme.primaryBorder,
               background: theme.bg,
@@ -147,13 +147,13 @@ const SliderRow = memo(function SliderRow({
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs px-1 font-medium" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        <div className="flex items-center justify-between text-[10px] sm:text-xs px-1 font-medium" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
           <span>{left}</span>
           <span>{right}</span>
         </div>
 
         <Slider
-          className="relative flex items-center select-none touch-none w-full h-12 group cursor-pointer"
+          className="relative flex items-center select-none touch-none w-full h-10 sm:h-12 group cursor-pointer"
           value={[tempValue]}
           onValueChange={(vals) => {
             const v = Math.min(100, Math.max(0, vals[0]));
@@ -192,7 +192,7 @@ const SliderRow = memo(function SliderRow({
             }}
           />
           <SliderTrack
-            className="relative grow rounded-full h-3 cursor-pointer transition-colors shadow-inner overflow-hidden"
+            className="relative grow rounded-full h-2.5 sm:h-3 cursor-pointer transition-colors shadow-inner overflow-hidden"
             style={{
               background: `${theme.textMuted}60`,
             }}
@@ -212,7 +212,7 @@ const SliderRow = memo(function SliderRow({
             />
           </SliderTrack>
           <SliderThumb
-            className="relative flex items-center justify-center w-10 h-10 text-[11px] font-bold border-[3px] rounded-full hover:scale-110 focus:outline-none transition-all duration-150 cursor-grab active:cursor-grabbing active:scale-105 shadow-xl"
+            className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 text-[9px] sm:text-[11px] font-bold border-2 sm:border-[3px] rounded-full hover:scale-110 focus:outline-none transition-all duration-150 cursor-grab active:cursor-grabbing active:scale-105 shadow-xl"
             style={{
               background: theme.primary,
               color: theme.bg,
@@ -225,7 +225,7 @@ const SliderRow = memo(function SliderRow({
           </SliderThumb>
         </Slider>
 
-        <div className="flex justify-between text-xs px-1 font-mono" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        <div className="flex justify-between text-[10px] sm:text-xs px-1 font-mono" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
           <span>0</span>
           <span>25</span>
           <span>50</span>
@@ -234,7 +234,7 @@ const SliderRow = memo(function SliderRow({
         </div>
       </div>
 
-      <p className="text-xs leading-relaxed" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+      <p className="text-[10px] sm:text-xs leading-relaxed" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
         {description}
       </p>
     </div>
@@ -441,7 +441,7 @@ export function TradingPreferencesForm({
   return (
     <div
       ref={scrollContainerRef}
-      className="p-6 space-y-4 overflow-y-auto flex-1 modal-scrollable"
+      className="p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1 modal-scrollable"
       style={{
         overscrollBehavior: 'contain',
         background: theme.bg,
@@ -457,9 +457,9 @@ export function TradingPreferencesForm({
       }}
     >
       {loading ? (
-        <div className="text-center py-10 space-y-3">
-          <Activity className="h-10 w-10 mx-auto animate-pulse" style={{ color: theme.primary }} />
-          <p className="text-sm" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+        <div className="text-center py-8 sm:py-10 space-y-3">
+          <Activity className="h-8 w-8 sm:h-10 sm:w-10 mx-auto animate-pulse" style={{ color: theme.primary }} />
+          <p className="text-xs sm:text-sm" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
             Loading preferences...
           </p>
         </div>
@@ -556,16 +556,16 @@ export function TradingPreferencesForm({
           />
 
           <div
-            className="border p-4"
+            className="border p-3 sm:p-4"
             style={{
               borderColor: theme.primaryBorder,
               background: theme.primarySoft,
             }}
           >
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+            <p className="mb-2 text-[10px] sm:text-xs font-semibold uppercase tracking-wider" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
               HOW THIS WORKS
             </p>
-            <ul className="text-xs space-y-1" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
+            <ul className="text-[10px] sm:text-xs space-y-1 leading-relaxed" style={{ color: theme.textMuted, fontFamily: fonts.body }}>
               <li>• Preferences adjust position sizing weights (Agent HOW)</li>
               <li>• Combines with LLM classification and LunarCrush data</li>
               <li>• Creates a personalized trade profile across deployments</li>
@@ -574,7 +574,7 @@ export function TradingPreferencesForm({
 
           {error && (
             <div
-              className="border p-3 text-sm"
+              className="border p-2.5 sm:p-3 text-xs sm:text-sm"
               style={{
                 borderColor: theme.primary,
                 background: theme.primarySoft,
@@ -586,11 +586,11 @@ export function TradingPreferencesForm({
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex-1 cursor-pointer py-3 border font-semibold transition-colors"
+                className="flex-1 cursor-pointer py-2.5 sm:py-3 text-sm sm:text-base border font-semibold transition-colors"
                 style={{
                   borderColor: theme.primaryBorder,
                   color: theme.text,
@@ -610,7 +610,7 @@ export function TradingPreferencesForm({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 cursor-pointer py-3 font-bold transition-colors disabled:opacity-50"
+              className="flex-1 cursor-pointer py-2.5 sm:py-3 text-sm sm:text-base font-bold transition-colors disabled:opacity-50"
               style={{
                 background: theme.primary,
                 color: theme.bg,
@@ -619,7 +619,7 @@ export function TradingPreferencesForm({
             >
               {saving ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Activity className="w-4 h-4 animate-spin" /> Saving...
+                  <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> Saving...
                 </span>
               ) : (
                 primaryLabel || (localOnly ? 'Save & Continue' : 'Save Preferences')

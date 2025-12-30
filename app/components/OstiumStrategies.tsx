@@ -32,7 +32,7 @@ export default function OstiumStrategies() {
 
   return (
     <div className="min-h-screen" style={{ background: theme.bg }}>
-      <OstiumHeader currentTime={currentTime} />
+      <OstiumHeader />
       <HeroSection />
       <ComparisonSection />
       <AgentsSection />
