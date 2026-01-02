@@ -357,6 +357,8 @@ model signals {
   llm_should_trade             Boolean?
   llm_fund_allocation          Float?
   llm_leverage                Float?
+  llm_close_trade_id          String?               
+  llm_net_position_change     String?               
   trade_executed               String?
   execution_result             String?
   routing_history              Json?
@@ -446,7 +448,7 @@ model telegram_posts {
   max_favorable_excursion  Decimal? @db.Decimal(10, 4)  // Track max MFE over lifetime
   max_adverse_excursion    Decimal? @db.Decimal(10, 4)  // Track max MAE over lifetime
   impact_factor  Decimal? @default(0) @db.Decimal(10, 4)  // Store final impact factor
-  
+
   telegram_sources        telegram_sources?     @relation(fields: [source_id], references: [id], onDelete: Cascade)
   telegram_alpha_users    telegram_alpha_users? @relation(fields: [alpha_user_id], references: [id], onDelete: Cascade)
 
@@ -543,15 +545,40 @@ model venue_markets {
 }
 
 model ostium_available_pairs {
+  // Ostium Pair Data
   id                  Int       @id
-  symbol              String
+  symbol              String    @unique
   max_leverage        Float?
   maker_max_leverage  Float?
   group               String?
+
+  // LunarCrush Market Metrics
+  galaxy_score            Float?
+  alt_rank                Int?
+  social_volume_24h       Float?
+  sentiment               Float?
+  percent_change_24h      Float?
+  volatility              Float?
+  price                   Decimal? @db.Decimal(38, 8)
+  volume_24h              Decimal? @db.Decimal(38, 8)
+  market_cap              Decimal? @db.Decimal(38, 8)
+  market_cap_rank         Int?
+  social_dominance        Float?
+  market_dominance        Float?
+  interactions_24h        Float?
+  galaxy_score_previous   Float?
+  alt_rank_previous       Int?
+
+  // Timestamps
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
   updated_at          DateTime  @updatedAt @db.Timestamptz(6)
 
   @@index([group])
+  @@index([symbol])
+  @@index([updated_at])
+  @@index([price])
+  @@index([sentiment])
+  @@index([volatility])
 }
 
 model venue_routing_config {
@@ -654,6 +681,31 @@ model lazy_trading_link_cache {
 
   @@index([expires_at])
   @@index([user_wallet])
+}
+
+/// Top traders from Ostium subgraph with calculated impact factors
+model top_traders {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wallet_address      String   @unique
+  total_volume        Decimal  @db.Decimal(30, 6)
+  total_closed_volume Decimal  @db.Decimal(30, 6)
+  total_pnl           Decimal  @db.Decimal(30, 6)
+  total_profit_trades Int
+  total_loss_trades   Int
+  total_trades        Int
+  last_active_at      DateTime @db.Timestamptz(6)
+  edge_score          Float    @default(0) @db.Real
+  consistency_score   Float    @default(0) @db.Real
+  stake_score         Float    @default(0) @db.Real
+  freshness_score     Float    @default(0) @db.Real
+  impact_factor       Float    @default(0) @db.Real
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime @updatedAt @db.Timestamptz(6)
+  
+  @@index([wallet_address])
+  @@index([impact_factor])
+  @@index([total_pnl])
+  @@index([updated_at])
 }
 
 enum agent_status_t {

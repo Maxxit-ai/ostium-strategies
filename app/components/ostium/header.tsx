@@ -28,9 +28,10 @@ const navItems: NavItem[] = [
     ],
   },
   { label: "Points", href: "https://app.ostium.com/points" },
-  { label: "Vault", href: "https://app.ostium.com/vault" },
+  // { label: "Vault", href: "https://app.ostium.com/vault" },
   { label: "Referrals", href: "https://app.ostium.com/referrals" },
   { label: "Portfolio", href: "https://app.ostium.com/portfolio" },
+  { label: "Top Traders", href: "/top-traders" },
   {
     label: "More",
     href: "#",
